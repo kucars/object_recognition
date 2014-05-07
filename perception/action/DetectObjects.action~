@@ -1,0 +1,22 @@
+# Detection region (GOAL)
+tabletop_object_segmentation_online/TableRegion table_region
+---
+# List of objects (RESULTS)
+#ist_msgs/ObjectList object_list
+
+# The information for the plane that has been detected
+tabletop_object_segmentation_online/Table table
+
+# The raw clusters detected in the scan 
+sensor_msgs/PointCloud[] clusters
+
+# List of objects
+bottomup_msgs/bottomup_msg objects
+
+---
+# The internal state that the detect objects action currently is in (FEEDBACK)
+string state
+
+# Time to completion - this is a combination of requested planning time and trajectory completion time (FEEDBACK)
+#duration time_to_completion
+float64 progress
