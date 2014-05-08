@@ -28,6 +28,7 @@
 #include <moveit_msgs/CollisionObject.h>
 
 
+
 using pcl::visualization::PointCloudColorHandlerGenericField;
 using pcl::visualization::PointCloudColorHandlerCustom;
 
@@ -294,6 +295,13 @@ void pairAlign (const PointCloud::Ptr cloud_src, const PointCloud::Ptr cloud_tgt
 }
 
 
+float RandomFloat(float a, float b) {
+    float random = ((float) rand()) / (float) RAND_MAX;
+    float diff = b - a;
+    float r = random * diff;
+    return a + r;
+}
+
 int main(int argc, char *argv[])
 {
     ros::init (argc, argv, "marker_detect");
@@ -345,26 +353,26 @@ int main(int argc, char *argv[])
 
 
 
-    /*moveit_msgs::Constraints constraints;
+    /* moveit_msgs::Constraints constraints;
     moveit_msgs::PositionConstraint end_effector_constraint;
     end_effector_constraint.link_name="end_effector";
+    end_effector_constraint.header.frame_id="base_link";
+    end_effector_constraint.weight=1.0;
     shape_msgs::SolidPrimitive solid_primitive;
     solid_primitive.type=shape_msgs::SolidPrimitive::BOX;
     solid_primitive.dimensions.resize(3);
-    solid_primitive.dimensions[0]=0.25;
-    solid_primitive.dimensions[1]=0.25;
-    solid_primitive.dimensions[2]=0.25;
+    solid_primitive.dimensions[0]=1.0;
+    solid_primitive.dimensions[1]=1.0;
+    solid_primitive.dimensions[2]=1.0;
     end_effector_constraint.constraint_region.primitives.push_back(solid_primitive);
     geometry_msgs::Pose pose;
     pose.orientation.w=1;
     pose.position.x=0.5;
     pose.position.y=0.5;
-    pose.position.z=0.25;
+    pose.position.z=0.5;
     end_effector_constraint.constraint_region.primitive_poses.push_back(pose);
     constraints.position_constraints.push_back(end_effector_constraint);
     group.setPathConstraints(constraints);*/
-
-
 
     group.setGoalTolerance(0.03);
 
@@ -372,93 +380,101 @@ int main(int argc, char *argv[])
 
     // specify that our target will be a random one
     geometry_msgs::PoseStamped random_pose;
+    random_pose.header.frame_id="base_link";
+
     std::cout << "get end effector link:"<< group.getEndEffectorLink()<<std::endl;
     bool success;
-    do
+    PointCloud::Ptr arm_cloud(new PointCloud);
+    PointCloud::Ptr camera_cloud(new PointCloud);
+
+    double range=0.2;
+    double range_angle=0.2;
+
+    int number_of_points=6;
+
+    while(ros::ok() &&
+          camera_cloud->points.size()!=number_of_points &&
+          arm_cloud->points.size()!=number_of_points)
     {
-        random_pose=group.getRandomPose();
-        group.setPoseTarget(random_pose);
-        moveit::planning_interface::MoveGroup::Plan my_plan;
-        success = group.plan(my_plan);
-        std::cout << random_pose.pose.position << std::endl;
-    }
-    while(success);
+        do
+        {
+            tf::Quaternion quat_tf=tf::createQuaternionFromRPY(-1.56,RandomFloat(-range,range),RandomFloat(-range,range));
+            geometry_msgs::Quaternion quat_msg;
+            tf::quaternionTFToMsg(quat_tf,quat_msg);
+            //random_pose=group.getRandomPose();
+            random_pose.pose.orientation=quat_msg;
+            random_pose.pose.position.x=0.5+RandomFloat(-range,range);
+            random_pose.pose.position.y=0.6+RandomFloat(-range,range);
+            random_pose.pose.position.z=0.25+RandomFloat(-range,range);
 
-    std::cout << "going to move to random pose: "<< random_pose << std::endl;
+            group.setPoseTarget(random_pose);
+            success = group.plan(my_plan);
+            //std::cout << random_pose.pose.position << std::endl;
+        }
+        while(!success && ros::ok());
+        std::cout << "success" << std::endl;
 
-
-    /*geometry_msgs::Pose pose_end;
-    pose_end.orientation.w=1;
-    pose_end.position.x=0.5;
-    pose_end.position.y=0.5;
-    pose_end.position.z=0.25;
-*/
-
-
-    /* Sleep to give Rviz time to visualize the plan. */
-    std::cout << "cheguei aqui" << std::endl;
-    //sleep(10.0);
-
-
-    if(group.execute(my_plan))
+        if(group.execute(my_plan))
             std::cout << "completed"<<std::endl;
-    else
+        else
             std::cout << "didn't complete"<<std::endl;
 
-    ROS_INFO("Visualizing plan 1 (pose goal) %s",success?"":"FAILED");
+        sleep(2.0);
+
+        //std::cout << group.getPoseTarget() << std::endl;
+
+        //std::cout << "current pose:" << group.getCurrentPose() << std::endl;
 
 
+        std::string marker_link="ar_marker_4";
+        std::string end_effector_link="end_effector";
+        std::string camera_link="camera_link";
 
-    //std::cout << group.getPoseTarget() << std::endl;
+        std::string base_link="base_link";
 
-    // plan the motion and then move the group to the sampled target
+        tf::TransformListener listener;
+        // Get some point correspondences
+        try
+        {
+            /////////////////////////////////////
+            // Point in the end effector frame //
+            /////////////////////////////////////
 
-    std::cout << "current pose:" << group.getCurrentPose() << std::endl;
+            tf::StampedTransform marker_end_effector_tf;
+            listener.waitForTransform(base_link, end_effector_link, ros::Time(0), ros::Duration(10.0) );
+            listener.lookupTransform(base_link, end_effector_link, ros::Time(0), marker_end_effector_tf);
 
-    exit(1);
-    ros::waitForShutdown();
+            ///////////////////////////
+            // Point in camera frame //
+            ///////////////////////////
 
+            tf::StampedTransform marker_camera_tf;
+            listener.waitForTransform(camera_link, marker_link, ros::Time(0), ros::Duration(10.0) );
+            listener.lookupTransform(camera_link, marker_link, ros::Time(0), marker_camera_tf);
 
-    std::string marker_link="ar_marker_4";
-    std::string end_effector_link="end_effector";
-    std::string camera_link="camera_link";
+            std::cout << "CHEGUEi aqui" << std::endl;
 
-    PointCloud::Ptr arm_cloud;
-    PointCloud::Ptr camera_cloud;
+            PointT arm_point;
+            arm_point.x=marker_end_effector_tf.getOrigin().x();
+            arm_point.y=marker_end_effector_tf.getOrigin().y();
+            arm_point.z=marker_end_effector_tf.getOrigin().z();
+            arm_cloud->points.push_back(arm_point);
 
-    tf::TransformListener listener;
-    // Get some point correspondences
-    try
-    {
-        /////////////////////////////////////
-        // Point in the end effector frame //
-        /////////////////////////////////////
+            std::cout << "arm_point:" << arm_point  << std::endl;
 
-        tf::StampedTransform marker_end_effector_tf;
-        listener.waitForTransform(end_effector_link, marker_link, ros::Time(0), ros::Duration(10.0) );
-        listener.lookupTransform(end_effector_link, marker_link, ros::Time(0), marker_end_effector_tf);
+            PointT camera_point;
+            camera_point.x=marker_camera_tf.getOrigin().x();
+            camera_point.y=marker_camera_tf.getOrigin().y();
+            camera_point.z=marker_camera_tf.getOrigin().z();
+            camera_cloud->points.push_back(camera_point);
 
-        PointT arm_point;
-        arm_point.x=marker_end_effector_tf.getOrigin().x();
-        arm_point.y=marker_end_effector_tf.getOrigin().y();
-        arm_point.z=marker_end_effector_tf.getOrigin().z();
-        arm_cloud->points.push_back(arm_point);
+            std::cout << "camera_point:" << camera_point  << std::endl;
 
-        // Point in camera frame
-
-        tf::StampedTransform marker_camera_tf;
-        listener.waitForTransform(camera_link, marker_link, ros::Time(0), ros::Duration(10.0) );
-        listener.lookupTransform(camera_link, marker_link, ros::Time(0), marker_camera_tf);
-
-        PointT camera_point;
-        camera_point.x=marker_camera_tf.getOrigin().x();
-        camera_point.y=marker_camera_tf.getOrigin().y();
-        camera_point.z=marker_camera_tf.getOrigin().z();
-        camera_cloud->push_back(camera_point);
-    }
-    catch (tf::TransformException ex)
-    {
-        ROS_ERROR("%s",ex.what());
+        }
+        catch (tf::TransformException ex)
+        {
+            ROS_ERROR("%s",ex.what());
+        }
     }
 
     PointCloud::Ptr result (new PointCloud), source, target;
