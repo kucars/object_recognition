@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
+#include <tf/transform_broadcaster.h>
 #include <boost/make_shared.hpp>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -302,10 +303,78 @@ float RandomFloat(float a, float b) {
     return a + r;
 }
 
+
+
+
+
+bool computeMatrix(PointCloud::Ptr target,
+                   PointCloud::Ptr world,
+                   std::string target_name,
+                   std::string world_name,
+                   const bool broadcast)
+{
+    if ((!world_name.empty()) && (!target_name.empty()) &&
+            (target->points.size() > 2) && (world->points.size() == target->points.size()))
+    {
+        Eigen::Matrix4f trMatrix;
+        pcl::registration::TransformationEstimationSVD<pcl::PointXYZ,pcl::PointXYZ> svd;
+        svd.estimateRigidTransformation(*target, *world, trMatrix);
+
+        ROS_INFO("Registration completed and Registration Matrix is being broadcasted");
+
+        tf::Transform transform(tf::Matrix3x3(trMatrix(0, 0), trMatrix(0, 1), trMatrix(0, 2),
+                                              trMatrix(1, 0), trMatrix(1, 1), trMatrix(1, 2),
+                                              trMatrix(2, 0), trMatrix(2, 1), trMatrix(2, 2)),
+                                tf::Vector3(trMatrix(0, 3), trMatrix(1, 3), trMatrix(2, 3)));
+
+
+        if (broadcast)
+        {
+            static tf::TransformBroadcaster br;
+            br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),
+                                                  world_name, target_name));
+        }
+    }
+}
+
+
+
+
 int main(int argc, char *argv[])
 {
     ros::init (argc, argv, "marker_detect");
     ros::NodeHandle n;
+
+    ros::NodeHandle n_priv("~");
+    double min_x,min_y,min_z;
+    double max_x,max_y,max_z;
+    double range, range_angle;
+    int number_of_points;
+
+    std::string marker_link;
+    std::string end_effector_link;
+    std::string camera_link;
+
+    std::string base_link="base_link";
+
+    n_priv.param<int>("number_of_points",number_of_points, 6);
+
+    n_priv.param<double>("range",range, 0.2);
+    n_priv.param<double>("range_angle",range_angle, 0.2);
+
+    n_priv.param<double>("min_x",min_x, 0.2);
+    n_priv.param<double>("max_x",max_x, 1.0);
+
+    n_priv.param<double>("min_x",min_y, 0.2);
+    n_priv.param<double>("max_x",max_y, 1.0);
+
+    n_priv.param<double>("min_x",min_z, 0.2);
+    n_priv.param<double>("max_x",max_z, 1.0);
+
+    n_priv.param<std::string>("marker_link",marker_link, "ar_marker_4");
+    n_priv.param<std::string>("camera_link",camera_link, "camera_link");
+    n_priv.param<std::string>("end_effector_link",end_effector_link, "end_effector");
+
 
     ros::NodeHandle node_handle;
     ros::AsyncSpinner spinner(1);
@@ -338,16 +407,7 @@ int main(int argc, char *argv[])
     group.getCurrentState()->copyJointGroupPositions(group.getCurrentState()->getRobotModel()->getJointModelGroup(group.getName()), group_variable_values);
     std::cout << "done" << std::endl;
 
-    double min_x,min_y,min_z;
-    double max_x,max_y,max_z;
 
-    min_x=0.2;
-    min_y=0.2;
-    min_z=0.2;
-
-    max_x=1.0;
-    max_y=1.0;
-    max_z=1.0;
 
     group.setWorkspace(min_x,min_y,min_z,max_x,max_y,max_z);
 
@@ -383,22 +443,17 @@ int main(int argc, char *argv[])
     random_pose.header.frame_id="base_link";
 
     std::cout << "get end effector link:"<< group.getEndEffectorLink()<<std::endl;
-    bool success;
     PointCloud::Ptr arm_cloud(new PointCloud);
     PointCloud::Ptr camera_cloud(new PointCloud);
-
-    double range=0.2;
-    double range_angle=0.2;
-
-    int number_of_points=6;
 
     while(ros::ok() &&
           camera_cloud->points.size()!=number_of_points &&
           arm_cloud->points.size()!=number_of_points)
     {
+        bool success;
         do
         {
-            tf::Quaternion quat_tf=tf::createQuaternionFromRPY(-1.56,RandomFloat(-range,range),RandomFloat(-range,range));
+            tf::Quaternion quat_tf=tf::createQuaternionFromRPY(-1.56,RandomFloat(-range_angle,range_angle),RandomFloat(-range_angle,range_angle));
             geometry_msgs::Quaternion quat_msg;
             tf::quaternionTFToMsg(quat_tf,quat_msg);
             //random_pose=group.getRandomPose();
@@ -414,6 +469,7 @@ int main(int argc, char *argv[])
         while(!success && ros::ok());
         std::cout << "success" << std::endl;
 
+        // Move Arm
         if(group.execute(my_plan))
             std::cout << "completed"<<std::endl;
         else
@@ -425,12 +481,6 @@ int main(int argc, char *argv[])
 
         //std::cout << "current pose:" << group.getCurrentPose() << std::endl;
 
-
-        std::string marker_link="ar_marker_4";
-        std::string end_effector_link="end_effector";
-        std::string camera_link="camera_link";
-
-        std::string base_link="base_link";
 
         tf::TransformListener listener;
         // Get some point correspondences
@@ -477,31 +527,32 @@ int main(int argc, char *argv[])
         }
     }
 
-    PointCloud::Ptr result (new PointCloud), source, target;
-    Eigen::Matrix4f GlobalTransform = Eigen::Matrix4f::Identity (), pairTransform;
-    for (size_t i = 1; i < arm_cloud->points.size (); ++i)
-    {
-        source = arm_cloud;
-        target = camera_cloud;
 
-        // Add visualization data
-        //showCloudsLeft(source,  target);
 
-        PointCloud::Ptr temp (new PointCloud);
-        //cqaPCL_INFO ("Aligning %s (%d) with %s (%d).\n", data[i-1].f_name.c_str (), source->points.size (), data[i].f_name.c_str (), target->points.size ());
-        pairAlign (source, target, temp, pairTransform, true);
+    PointCloud::Ptr source, target;
+    Eigen::Matrix4f pairTransform;
 
-        //transform current pair into the global transform
-        //pcl::transformPointCloud (*temp, *result, GlobalTransform);
+    source = arm_cloud;
+    target = camera_cloud;
 
-        //update the global transform
-        //GlobalTransform = pairTransform * GlobalTransform;
+    // Add visualization data
+    //showCloudsLeft(source,  target);
 
-        //save aligned pair, transformed into the first cloud's frame
-        //std::stringstream ss;
-        //ss << i << ".pcd";
-        //pcl::io::savePCDFile (ss.str (), *result, true);
+    PointCloud::Ptr temp (new PointCloud);
+    //cqaPCL_INFO ("Aligning %s (%d) with %s (%d).\n", data[i-1].f_name.c_str (), source->points.size (), data[i].f_name.c_str (), target->points.size ());
+    pairAlign (source, target, temp, pairTransform, true);
 
-    }
+    //transform current pair into the global transform
+    //pcl::transformPointCloud (*temp, *result, GlobalTransform);
+
+    //update the global transform
+    //GlobalTransform = pairTransform * GlobalTransform;
+
+    //save aligned pair, transformed into the first cloud's frame
+    //std::stringstream ss;
+    //ss << i << ".pcd";
+    //pcl::io::savePCDFile (ss.str (), *result, true);
+
 }
+
 
