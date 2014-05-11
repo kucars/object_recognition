@@ -1,0 +1,13 @@
+reference_points_percentage: 0.2
+feature_angle_bins: 35
+feature_distance_bins: 30
+pose_angle_bins: 35
+accumulator_peak_threshold: 0.90
+radius: 0.01
+neighbours: 10
+radius_search: false
+hypotheses_per_model: 1
+
+
+
+

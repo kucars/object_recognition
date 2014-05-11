@@ -1,0 +1,16 @@
+<launch>
+	<!-- topic where the hypotheses come from -->
+	<arg name="hypotheses_in" default="object_pose_estimation_out" />
+
+	<!-- topic where the markers go -->
+	<arg name="markers_out" default="graspable_points_markers" />
+
+	<node pkg="objectrecognition" name="object_graspable_points" type="object_graspable_points"  output="screen"> 
+		<!--database parameters -->
+		<rosparam command="load" file="$(find objectrecognition)/config/db.yaml"/>
+		<rosparam command="load" file="$(find objectrecognition)/config/parameters.yaml"/>
+
+		<remap from="hypotheses_in" to="$(arg hypotheses_in)" />
+		<remap from="markers_out" to="$(arg markers_out)" />
+	</node>
+</launch>

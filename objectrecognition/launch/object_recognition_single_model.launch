@@ -1,0 +1,18 @@
+<launch>
+
+	<!-- point cloud file-->
+	<arg name="model_file" default="$(find tests)/datasets/object_models/cup_20132448/optModel-mls.pcd" />
+	<arg name="model_file2" default="$(find tests)/datasets/synthetic/cylinder.pcd" />
+  	<param name="model_file" value="$(arg model_file)" />
+  	<param name="model_file2" value="$(arg model_file2)" />
+	<!-- global models descriptors file-->
+	<arg name="models_database_file" default="$(find objectrecognition)/global_model_descriptors/testeee.model" />
+  	<param name="models_database_file" value="$(arg models_database_file)" />
+
+	<!-- load the database parameters -->
+	<rosparam command="load" file="$(find objectrecognition)/config/parameters.yaml"/>
+	<node pkg="objectrecognition" name="objectrecognition" type="kinect_single"  output="screen">
+	</node> 
+</launch>
+
+
