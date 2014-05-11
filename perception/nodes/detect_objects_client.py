@@ -50,7 +50,7 @@ if __name__ == '__main__':
         # Initializes a rospy node so that the SimpleActionClient can
         # publish and subscribe over ROS.
         rospy.init_node('detect_object_clusters_client')
-	while True:
+	while rospy.is_shutdown()==False:
           perception_client()
     except rospy.ROSInterruptException:
         print "program interrupted before completion"

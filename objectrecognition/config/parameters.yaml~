@@ -1,6 +1,6 @@
 reference_points_percentage: 0.05
 angle_bins: 30
-distance_bins: 20
+distance_bins: 15
 pose_angle_bins: 30
 accumulator_peak_threshold: 0.9
 radius: 0.01

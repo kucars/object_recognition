@@ -1,3 +1,0 @@
-sensor_msgs/PointCloud[] cluster_list
----
-bottomup_msgs/bottomup_msg object_list

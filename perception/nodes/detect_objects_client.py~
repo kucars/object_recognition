@@ -15,7 +15,6 @@ import time
 def perception_client():
 	# Region bounding the plannar surface and the objects of interest 
 	table_region=tabletop_object_segmentation_online.msg.TableRegion() 
-	table_region=tabletop_object_segmentation_online.msg.TableRegion()
 
 	#UPPER SHELF
 	table_region.x_filter_min=-0.3
@@ -51,7 +50,7 @@ if __name__ == '__main__':
         # Initializes a rospy node so that the SimpleActionClient can
         # publish and subscribe over ROS.
         rospy.init_node('detect_object_clusters_client')
-	while True:
+	while rospy.is_shutdown()==False:
           perception_client()
     except rospy.ROSInterruptException:
         print "program interrupted before completion"

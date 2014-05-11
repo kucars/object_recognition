@@ -54,8 +54,10 @@ class DetectObjectsAction(object):
   def tabletop_segmentation(self):
     print 'waiting for tabletop segmentation service...'
     rospy.wait_for_service('tabletop_segmentation')
+    print 'done waiting'
 
     try:
+      print 'done waiting'
       table_top = rospy.ServiceProxy('tabletop_segmentation' , TabletopSegmentation)
       resp = table_top()
       if len(resp.clusters) == 0:
@@ -130,7 +132,7 @@ class DetectObjectsAction(object):
         self._as.set_aborted(self._result)
         return False
 
-    self._result.object_list = object_list
+    self._result.object_list = object_recognition_and_pose_estimation_resp.object_list
 
     # check that preempt has not been requested by the client
     if self._as.is_preempt_requested():
