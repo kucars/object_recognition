@@ -5,8 +5,8 @@ import rospy
 roslib.load_manifest('ist_generate_grasps')
 import actionlib
 roslib.load_manifest('ist_tasks')
-import ist_perception_msgs.msg
-import ist_perception_msgs.srv
+import perception_msgs.msg
+import perception_msgs.srv
 from ist_grasp_generation_msgs.srv import *
 from ist_grasp_generation_msgs.msg import *
 import ist_msgs.msg
@@ -155,12 +155,12 @@ def collision_environment(table, action):
 
 class DetectClustersAction(object):
   # create messages that are used to publish feedback/result
-  _feedback = ist_perception_msgs.msg.DetectClustersFeedback()
-  _result   = ist_perception_msgs.msg.DetectClustersResult()
+  _feedback = perception_msgs.msg.DetectClustersFeedback()
+  _result   = perception_msgs.msg.DetectClustersResult()
 
   def __init__(self, name):
     self._action_name = name
-    self._as = actionlib.SimpleActionServer(self._action_name, ist_perception_msgs.msg.DetectClustersAction, execute_cb=self.execute_cb)
+    self._as = actionlib.SimpleActionServer(self._action_name, perception_msgs.msg.DetectClustersAction, execute_cb=self.execute_cb)
     self._as.start()
 
   def execute_cb(self, goal):
@@ -302,8 +302,8 @@ class DetectClustersAction(object):
     print 'waiting for cluster subsampling and normal computation service...'
     rospy.wait_for_service('ist_compute_object_normals')
     try:
-        point_refinement = rospy.ServiceProxy('ist_compute_object_normals' , ist_perception_msgs.srv.GetSubSampledNormalsPointCloud)
-        myReq = ist_perception_msgs.srv.GetSubSampledNormalsPointCloudRequest()
+        point_refinement = rospy.ServiceProxy('ist_compute_object_normals' , perception_msgs.srv.GetSubSampledNormalsPointCloud)
+        myReq = perception_msgs.srv.GetSubSampledNormalsPointCloudRequest()
         object_list = []
         #self.request_base_link_to_table_tf()
         #object_list = ist_msgs.msg.ObjectList()

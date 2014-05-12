@@ -1,7 +1,7 @@
 # Detection region (GOAL)
 TableRegion table_region
 ---
-# List of Grasps (RESULTS)
+# List of objects (RESULTS)
 ist_msgs/ObjectList object_list
 
 # Table

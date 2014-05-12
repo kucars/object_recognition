@@ -3,15 +3,15 @@
   <include file="$(find openni_launch)/launch/openni.launch"/>
 
   <!-- Tabletop segmentation -->
-  <include file="$(find tabletop_object_segmentation_online)/launch/tabletop_segmentation_online_param_up.launch"/>
+  <include file="$(find tabletop_object_segmentation_online)/launch/tabletop_segmentation_online_param_up.launch"  output="screen"/>
 
   <!-- Object recognition and pose_estimation_server -->
-  <include file="$(find objectrecognition)/launch/object_recognition_pose_estimation_server.launch"/>
+  <include file="$(find objectrecognition)/launch/object_recognition_pose_estimation_server.launch"  output="screen"/>
 
   <!-- Detect objects action server -->
   <node pkg="perception" name="detect_objects_server" type="detect_objects_server.py" respawn="true" output="screen"/>
 
-  <!-- Detect objects action server -->
+  <!-- Detect objects action client -->
   <node pkg="perception" name="detect_objects_client" type="detect_objects_client.py" respawn="true" output="screen"/>
 
 </launch>

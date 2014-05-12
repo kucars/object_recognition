@@ -3,7 +3,7 @@
 import roslib; roslib.load_manifest('ist_tasks')
 import rospy
 import actionlib
-from ist_perception_msgs.msg import *
+from perception_msgs.msg import *
 from ist_grasp_generation_msgs.srv import *
 from ist_grasp_generation_msgs.msg import *
 import numpy
@@ -24,8 +24,8 @@ class ObjectTest:
 
 def perception_client():
 	# Region bounding the plannar surface and the objects of interest 
-	table_region=ist_perception_msgs.msg.TableRegion() 
-	table_region=ist_perception_msgs.msg.TableRegion()
+	table_region=perception_msgs.msg.TableRegion() 
+	table_region=perception_msgs.msg.TableRegion()
 
 	#UPPER SHELF
 	table_region.x_filter_max=1.4
@@ -73,7 +73,7 @@ def perception_client():
                         #ObjectTest('claw_hammer','freeform_claw_hammer124', 8, numpy.matrix([[1, 0, 0],[0, 0, 1],[0, -1, 0]]), numpy.array([0 ,   0,  0]),       'can')]    
 
 	# Creates the SimpleActionClient, passing the type of the action (DetectObjectsAction) to the constructor.
-	client = actionlib.SimpleActionClient('detect_clusters_server', ist_perception_msgs.msg.DetectClustersAction)
+	client = actionlib.SimpleActionClient('detect_clusters_server', perception_msgs.msg.DetectClustersAction)
 
 	# Waits until the action server has started up and started listening for goals.
 	client.wait_for_server()
@@ -105,7 +105,7 @@ def perception_client():
 				axes_vector = array('d',(numpy.resize(axes,(1,9))).flat)
 				#resp = set_position(objectList[elemCounter].sim_id,position, )#rotate object
                                 # Creates a goal to send to the action server.
-				goal = ist_perception_msgs.msg.DetectClustersGoal()
+				goal = perception_msgs.msg.DetectClustersGoal()
 				goal.table_region = table_region
 				goal.object_name = objectList[elemCounter].sim_id
 				goal.position = position
@@ -141,3 +141,4 @@ if __name__ == '__main__':
         perception_client()
     except rospy.ROSInterruptException:
         print "program interrupted before completion"
+

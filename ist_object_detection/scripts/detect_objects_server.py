@@ -5,8 +5,8 @@ import rospy
 
 import actionlib
 
-import ist_perception_msgs.msg
-import ist_perception_msgs.srv
+import perception_msgs.msg
+import perception_msgs.srv
 import ist_msgs.msg
 import std_srvs.srv
 import problog_msgs.srv
@@ -144,12 +144,12 @@ def print_objects_info(object_list):
 
 class DetectObjectsAction(object):
   # create messages that are used to publish feedback/result
-  _feedback = ist_perception_msgs.msg.DetectObjectsFeedback()
-  _result   = ist_perception_msgs.msg.DetectObjectsResult()
+  _feedback = perception_msgs.msg.DetectObjectsFeedback()
+  _result   = perception_msgs.msg.DetectObjectsResult()
 
   def __init__(self, name):
     self._action_name = name
-    self._as = actionlib.SimpleActionServer(self._action_name, ist_perception_msgs.msg.DetectObjectsAction, execute_cb=self.execute_cb)
+    self._as = actionlib.SimpleActionServer(self._action_name, perception_msgs.msg.DetectObjectsAction, execute_cb=self.execute_cb)
     self._as.start()
 
   def execute_cb(self, goal):
@@ -339,8 +339,8 @@ class DetectObjectsAction(object):
     print 'waiting for shape completion service...'
     rospy.wait_for_service('ist_point_cloud_refinement')
     try:
-        point_refinement = rospy.ServiceProxy('ist_point_cloud_refinement' , ist_perception_msgs.srv.GetRefinedPointCloud)
-        myReq = ist_perception_msgs.srv.GetRefinedPointCloudRequest()
+        point_refinement = rospy.ServiceProxy('ist_point_cloud_refinement' , perception_msgs.srv.GetRefinedPointCloud)
+        myReq = perception_msgs.srv.GetRefinedPointCloudRequest()
         #object_list = []
         object_list = ist_msgs.msg.ObjectList()
         for i in range(0,len(segmentation_resp.clusters)):
@@ -361,9 +361,9 @@ class DetectObjectsAction(object):
     rospy.wait_for_service('ist_compute_object_details')
     object_list = ist_msgs.msg.ObjectList()
     try:
-        object_details = rospy.ServiceProxy('ist_compute_object_details' , ist_perception_msgs.srv.GetObjectDetails)
+        object_details = rospy.ServiceProxy('ist_compute_object_details' , perception_msgs.srv.GetObjectDetails)
         for i in range(0,len(complete_shapes.objects)):
-          myReqDet = ist_perception_msgs.srv.GetObjectDetailsRequest()
+          myReqDet = perception_msgs.srv.GetObjectDetailsRequest()
           myReqDet.point_cloud = complete_shapes.objects[i].point_cloud
           #myReqDet.object_name = std_msgs.msg.String(str(object_name))
           myReqDet.point_cloud_object_details = complete_shapes.objects[i].point_cloud_object_details
