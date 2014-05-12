@@ -1,0 +1,28 @@
+<package>
+  <description brief="ist_object_details">
+
+	ist_object_details
+
+  </description>
+  <author>Rui P. Figueiredo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/match_ellipsoid</url>
+  <depend package="roscpp"/>
+  <depend package="pcl"/>
+  <depend package="pcl_ros"/>
+  <depend package="eigen_conversions" />
+  <depend package="tf_conversions" />
+  <depend package="tf"/>
+ <!-- <depend package="uc3m_msgs"/>-->
+  <depend package="ist_perception_msgs"/>
+  <depend package="std_srvs"/>
+  <depend package="opencv2" />
+  <rosdep name="eigen"/>
+  <rosdep name="boost" />
+  <export>
+	<cpp cflags="-I${prefix}/include" />
+  </export>
+</package>
+
+

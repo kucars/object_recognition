@@ -1,0 +1,11 @@
+<launch>
+	<!-- Tabletop segmentation -->
+  <include file="$(find firstmm_tabletop_segmentation)/launch/tabletop_segmentation_online_param_up.launch"/>
+
+	<!-- Object details -->
+  <include file="$(find ist_object_details)/launch/ist_object_details.launch"/>
+
+	<!-- Detect objects action server -->
+  <node pkg="ist_object_detection" name="detect_objects_server" type="detect_objects_server.py" respawn="true" output="screen"/>
+</launch>
+

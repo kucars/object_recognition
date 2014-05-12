@@ -1,0 +1,15 @@
+<package>
+  <description brief="ist_object_detection">
+
+     ist_object_detection
+
+  </description>
+  <author>rui</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ist_object_detection</url>
+  <depend package="ist_perception_msgs"/>
+	<depend package="problog_msgs"/>
+</package>
+
+
