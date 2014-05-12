@@ -26,10 +26,10 @@
 #include <ist_msgs/Object.h>
 
 #include "object_details/object_details.h"
-#include <ist_perception_msgs/GetRefinedPointCloud.h>
-#include <ist_perception_msgs/GetObjectDetails.h>
-#include <ist_perception_msgs/SetObjectCoordinateFrame.h>
-#include <ist_perception_msgs/Object.h>
+#include <perception_msgs/GetRefinedPointCloud.h>
+#include <perception_msgs/GetObjectDetails.h>
+#include <perception_msgs/SetObjectCoordinateFrame.h>
+#include <perception_msgs/Object.h>
 #include <std_srvs/Empty.h>
 #include <tf_conversions/tf_eigen.h>
 //template <class objectModelT>
@@ -126,13 +126,13 @@ class RosObjectDetails
 		//bool serviceCallback(ist_match_ellipsoid_msgs::GetEllipsoids::Request  &req, ist_match_ellipsoid_msgs::GetEllipsoids::Response &res);
 
 		// Service for point cloud refinement
-		bool refinePointCloudServiceCallback(ist_perception_msgs::GetRefinedPointCloud::Request  &req, ist_perception_msgs::GetRefinedPointCloud::Response &res);
+		bool refinePointCloudServiceCallback(perception_msgs::GetRefinedPointCloud::Request  &req, perception_msgs::GetRefinedPointCloud::Response &res);
 
 		// Service for object details computation
-		bool computeObjectDetailsServiceCallback(ist_perception_msgs::GetObjectDetails::Request &req, ist_perception_msgs::GetObjectDetails::Response &res);
+		bool computeObjectDetailsServiceCallback(perception_msgs::GetObjectDetails::Request &req, perception_msgs::GetObjectDetails::Response &res);
 
 		// Service for setting the object coordinate frame
-		bool setObjectCoordinateFrameServiceCallback(ist_perception_msgs::SetObjectCoordinateFrame::Request &req, ist_perception_msgs::SetObjectCoordinateFrame::Response &res);
+		bool setObjectCoordinateFrameServiceCallback(perception_msgs::SetObjectCoordinateFrame::Request &req, perception_msgs::SetObjectCoordinateFrame::Response &res);
 
 		// Service for resetting cluster point clouds
 		bool resetPointCloudServiceCallback(std_srvs::Empty::Request & req, std_srvs::Empty::Response & res);
@@ -148,7 +148,7 @@ class RosObjectDetails
 
 		//ist_msgs::Object fillObjectTypeMessage(const ObjectDetails & object);
 		ist_msgs::Object fillObjectHandleProjectTypeMessage(const ObjectDetails & object);
-		ist_perception_msgs::Object fillObjectTypeMessage(const ObjectDetails & object);
+		perception_msgs::Object fillObjectTypeMessage(const ObjectDetails & object);
 
 		//rosEllipsoidDescription(double & _standard_deviations) : standard_deviations(_standard_deviations),current_marker_id(0)
 		//{}

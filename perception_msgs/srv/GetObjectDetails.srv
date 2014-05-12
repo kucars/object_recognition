@@ -5,7 +5,7 @@ sensor_msgs/PointCloud point_cloud
 sensor_msgs/PointCloud point_cloud_object_details
 
 #uc3m_msgs/Table table
-tabletop_object_detector/Table table
+tabletop_object_segmentation_online/Table table
 
 #object name (only for testing purposes)
 std_msgs/String object_name

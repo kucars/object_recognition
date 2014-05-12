@@ -12,4 +12,4 @@ int8 TOP=3
 int8 HANDLE=4
 
 # Weighted possible region tasks
-ist_perception_msgs/Task[] tasks
+perception_msgs/Task[] tasks

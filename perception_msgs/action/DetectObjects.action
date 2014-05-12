@@ -5,7 +5,7 @@ TableRegion table_region
 ist_msgs/ObjectList object_list
 
 # Table
-tabletop_object_detector/Table table
+tabletop_object_segmentation_online/Table table
 ---
 # The internal state that the detect objects action currently is in (FEEDBACK)
 string state

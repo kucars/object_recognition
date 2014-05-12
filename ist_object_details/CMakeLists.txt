@@ -1,47 +1,50 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
+project(ist_object_details)
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
+find_package(catkin REQUIRED COMPONENTS roscpp pcl_ros eigen_conversions tf_conversions tf perception_msgs std_srvs)
 
-rosbuild_init()
+find_package(Boost REQUIRED)
+find_package(PCL REQUIRED)
+find_package(Eigen REQUIRED)
+find_package(VTK REQUIRED)
+find_package(OpenCV)
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+include_directories(include   
+  ${Boost_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
+  ${Eigen_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
+  ${VTK_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
+)
 
-#uncomment if you have defined messages
-#rosbuild_genmsg()
-#uncomment if you have defined services
-#rosbuild_gensrv()
+## Add link directories
+link_directories(
+  ${Boost_LIBRARY_DIRS}
+  ${PCL_LIBRARY_DIRS}
+  ${Eigen_LIBRARY_DIRS}
+  ${VTK_LIBRARY_DIRS}
+  ${OpenCV_LIBRARY_DIRS}
+)
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#rosbuild_add_executable(example examples/example.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+catkin_package(CATKIN_DEPENDS 
+  pcl_ros eigen_conversions tf_conversions tf perception_msgs std_srvs
+)
 
-#find_package(PCL 1.5 REQUIRED COMPONENTS common io visualization surface filters)
-#include_directories(${PCL_INCLUDE_DIRS} include)
-#link_directories(${PCL_LIBRARY_DIRS})
-#add_definitions(${PCL_DEFINITIONS})
-
-
-include_directories(/usr/include/vtk-5.8)
+catkin_package(
+#  INCLUDE_DIRS include
+  LIBRARIES object_details
+#  CATKIN_DEPENDS other_catkin_pkg
+#  DEPENDS system_lib
+)
 
 #include_directories(/usr/include/vtk-5.6)
-rosbuild_add_library(object_details src/object_details/object_details.cpp)
-rosbuild_add_executable(ros_object_details src/ros_object_details/ros_object_details.cpp)
-#target_link_libraries(ros_object_details object_details libvtkCommon.so libvtkFiltering.so libvtkRendering.so libpcl16pcl_visualization.so libpcl16pcl_surface.so libpcl16pcl_filters.so)
-target_link_libraries(ros_object_details object_details libvtkCommon.so libvtkFiltering.so libvtkRendering.so)
-#target_link_libraries(ros_object_details ${PCL_LIBRARIES} object_details)
+add_library(object_details src/object_details/object_details.cpp)
+add_executable(ros_object_details src/ros_object_details/ros_object_details.cpp)
+target_link_libraries(ros_object_details object_details libvtkCommon.so libvtkFiltering.so libvtkRendering.so  ${Eigen_LIBRARIES} ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${catkin_LIBRARIES}   ${OpenCV_LIBRARIES})
+
 
 

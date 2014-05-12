@@ -46,13 +46,11 @@ catkin_package(
     roscpp
     bottomup_msgs
     rosconsole
-    #tabletop_object_segmentation_online
     tf
     pcl_conversions
     pcl_ros
     perception_msgs
   DEPENDS
-    #Boost
     Eigen
 )
 
