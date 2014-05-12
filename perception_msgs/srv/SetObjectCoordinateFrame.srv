@@ -1,0 +1,7 @@
+# Point cloud detected in the scan
+geometry_msgs/PoseStamped pose
+string name
+---
+
+
+
