@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<multimarker markers="3">
+    <marker index="0" status="1"> <!-- Center -->
+        <corner x="-2.2" y="-2.2" z="0" />
+        <corner x="2.2" y="-2.2" z="0" />
+        <corner x="2.2" y="2.2" z="0" />
+        <corner x="-2.2" y="2.2" z="0" />
+    </marker>
+    <marker index="6" status="1"> <!--TOP-->
+        <corner x="3.7" y="-2.2" z="0" />
+        <corner x="8.1" y="-2.2" z="0" />
+        <corner x="8.1" y="2.2" z="0" />
+        <corner x="3.7" y="2.2" z="0" />
+    </marker>
+    <marker index="7" status="1"> <!--RIGHT-->
+        <corner x="-2.2" y="-3.7" z="0" />
+        <corner x="2.2"  y="-3.7" z="0" />
+        <corner x="2.2"  y="-8.1" z="0" />
+        <corner x="-2.2" y="-8.1" z="0" />
+    </marker>
+</multimarker>

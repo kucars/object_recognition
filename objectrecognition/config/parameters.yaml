@@ -8,6 +8,6 @@ neighbours: 10
 radius_search: false
 filter_on: false
 hypotheses_per_model: 20
-processing_frame: /openni_rgb_optical_frame
+processing_frame: /camera_rgb_optical_frame
 models_database_file: ikea.test
 models_specification_file: models.xml

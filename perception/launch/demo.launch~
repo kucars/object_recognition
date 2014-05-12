@@ -14,7 +14,5 @@
   <!-- Detect objects action server -->
   <node pkg="perception" name="detect_objects_client" type="detect_objects_client.py" respawn="true" output="screen"/>
 
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find perception)/demo.rviz" required="true" />
-  <node pkg="rviz" name="rviz" type="rviz" respawn="true" output="screen"/>
 </launch>
 
