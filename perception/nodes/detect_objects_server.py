@@ -5,7 +5,7 @@ import rospy
 #roslib.load_manifest('ist_generate_grasps')
 import actionlib
 #roslib.load_manifest('ist_tasks')
-import perception.msg
+import perception_msgs.msg
 import std_srvs.srv
 from tabletop_object_segmentation_online.srv import *
 from perception_msgs.srv import *
@@ -17,12 +17,12 @@ import time
 
 class DetectObjectsAction(object):
   # create messages that are used to publish feedback/result
-  _feedback = perception.msg.DetectObjectsFeedback()
-  _result   = perception.msg.DetectObjectsResult()
+  _feedback = perception_msgs.msg.DetectObjectsFeedback()
+  _result   = perception_msgs.msg.DetectObjectsResult()
 
   def __init__(self, name):
     self._action_name = name
-    self._as = actionlib.SimpleActionServer(self._action_name, perception.msg.DetectObjectsAction, execute_cb=self.execute_cb)
+    self._as = actionlib.SimpleActionServer(self._action_name, perception_msgs.msg.DetectObjectsAction, execute_cb=self.execute_cb)
     self._as.start()
 
   def execute_cb(self, goal):
@@ -78,7 +78,7 @@ class DetectObjectsAction(object):
       myReq.table=segmentation_resp.table
       myReq.cluster_list=segmentation_resp.clusters
       resp = obj_rec_pose_est(myReq)
-      if len(resp.object_list.Region) == 0:
+      if len(resp.object_list.graspable_objects) == 0:
         print 'No objects found'
         return False
       else:
@@ -87,6 +87,26 @@ class DetectObjectsAction(object):
     except rospy.ServiceException, e:
         print "Object recognition pose estimation Service call failed: %s"%e
         return False
+
+  def object_details(self,complete_shapes):    
+    print 'waiting for object details service...'
+    rospy.wait_for_service('ist_compute_object_details')
+    object_list = ist_msgs.msg.ObjectList()
+    try:
+        object_details = rospy.ServiceProxy('ist_compute_object_details' , perception_msgs.srv.GetObjectDetails)
+        for i in range(0,len(complete_shapes.objects)):
+          myReqDet = perception_msgs.srv.GetObjectDetailsRequest()
+          myReqDet.point_cloud = complete_shapes.objects[i].point_cloud
+          #myReqDet.object_name = std_msgs.msg.String(str(object_name))
+          myReqDet.point_cloud_object_details = complete_shapes.objects[i].point_cloud_object_details
+          obj_det_resp = object_details(myReqDet)
+          #raw_input("Waiting for a keystroke")
+          object_list.objects.append(obj_det_resp.object)
+    except rospy.ServiceException, e:
+        print "GetObjectDetails Service call failed: %s"%e
+        return False
+    return object_list
+
 
         
   def execution_steps(self,goal):
@@ -138,6 +158,32 @@ class DetectObjectsAction(object):
         self._as.set_preempted()
         return False
 
+    # publish the feedback
+    self._feedback.state="Done." 
+    self._feedback.progress=75.0
+    self._as.publish_feedback(self._feedback)
+
+
+     # 3. Object details
+
+    # publish the feedback
+    self._feedback.state="Computing object details." 
+    self._feedback.progress=76.0
+    self._as.publish_feedback(self._feedback)
+   
+    # Service call
+    object_list=self.object_details(shape_completion_resp)
+    if object_list==False:
+        #self._as.set_aborted(self._result)
+        return False
+    print_objects_info(object_list)  
+     
+    # check that preempt has not been requested by the client
+    if self._as.is_preempt_requested():
+        rospy.loginfo('%s: Preempted' % self._action_name)
+        self._as.set_preempted()
+        return False
+        
     # publish the feedback
     self._feedback.state="Done." 
     self._feedback.progress=100.0

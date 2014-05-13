@@ -3,7 +3,7 @@
 import roslib; #roslib.load_manifest('ist_tasks')
 import rospy
 import actionlib
-from perception.msg import *
+from perception_msgs.msg import *
 from tabletop_object_segmentation_online.srv import *
 import numpy
 import math
@@ -29,11 +29,11 @@ def perception_client():
 	
 
 	# Creates the SimpleActionClient, passing the type of the action (DetectObjectsAction) to the constructor.
-	client = actionlib.SimpleActionClient('detect_objects_server', perception.msg.DetectObjectsAction)
+	client = actionlib.SimpleActionClient('detect_objects_server', perception_msgs.msg.DetectObjectsAction)
 
 	# Waits until the action server has started up and started listening for goals.
 	client.wait_for_server()
-	goal = perception.msg.DetectObjectsGoal()
+	goal = perception_msgs.msg.DetectObjectsGoal()
 	goal.table_region = table_region
 	client.send_goal(goal)#, self.perception_done_cb, self.perception_active_cb, self.perception_feedback_cb)
 	#client.cancel_goal()

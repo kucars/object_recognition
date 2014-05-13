@@ -16,6 +16,7 @@
 #include <household_objects_database_msgs/DatabaseModelPoseList.h>
 #include <manipulation_msgs/GraspableObjectList.h>
 #include <sstream>
+#include <ist_msgs/ObjectList.h>
 
 
 ros::Publisher pub; 
@@ -28,9 +29,9 @@ typedef boost::function<bool(perception_msgs::PoseEstimation::Request&, percepti
 
 std::string convertInt(int number)
 {
-   std::stringstream ss;//create a stringstream
-   ss << number;//add number to the stream
-   return ss.str();//return a string with the contents of the stream
+    std::stringstream ss;//create a stringstream
+    ss << number;//add number to the stream
+    return ss.str();//return a string with the contents of the stream
 }
 
 
@@ -63,6 +64,8 @@ bool recogntion_pose_estimation(perception_msgs::PoseEstimation::Request  &req,
     // FOR EACH CLUSTER //
     //////////////////////
 
+    ist_msgs::ObjectList object_list;
+
     manipulation_msgs::GraspableObjectList graspable_object_list;
 
     int cluster_id=-1;
@@ -87,10 +90,9 @@ bool recogntion_pose_estimation(perception_msgs::PoseEstimation::Request  &req,
         catch (tf::TransformException &ex)
         {
             ROS_ERROR("Failed to transform cloud from frame %s into frame %s", clus.header.frame_id.c_str(),
-            processing_frame.c_str());
+                      processing_frame.c_str());
             return -1;
         }
-
 
         manipulation_msgs::GraspableObject graspable_object;
         graspable_object.reference_frame_id=processing_frame;
@@ -128,6 +130,13 @@ bool recogntion_pose_estimation(perception_msgs::PoseEstimation::Request  &req,
         bestHypothesisIndex=0;
         bestHypothesisVotes=0;
 
+        if(bestHypothesisVotes==0)
+        {
+            ROS_INFO("No hypotheses!");
+            hypotheses.clear();
+            continue;
+        }
+
         for(size_t m = 0; m < hypotheses.size(); ++m)
         {
             for(size_t p = 0; p < hypotheses[m].size(); ++p)
@@ -155,15 +164,18 @@ bool recogntion_pose_estimation(perception_msgs::PoseEstimation::Request  &req,
                 bestModelIndex=m;
                 //bestHypothesisIndex=0;
             }
-        }
 
-        if(bestHypothesisVotes==0)
-        {
-            ROS_INFO("No hypotheses!");
-            hypotheses.clear();
-            continue;
         }
+        ist_msgs::Object object;
+        object.state.graspable_object=graspable_object;
+        object_list.objects.push_back(graspable_object);
+
+        graspable_object_list.graspable_objects.push_back(graspable_object);
     }
+
+    ///////////////////////
+    // Visualize results //
+    ///////////////////////
 
     // Transform model cloud
     pcl::PointCloud<pcl::PointNormal>::Ptr cloudOut(new pcl::PointCloud<pcl::PointNormal>);
@@ -174,25 +186,14 @@ bool recogntion_pose_estimation(perception_msgs::PoseEstimation::Request  &req,
 
     hypotheses.clear();
 
-    ///////////////////////
-    // Visualize results //
-    ///////////////////////
-
     if(!clouds.empty())
     {
-        ROS_INFO("CLOUDS NOT EMPTY");
-        //pub = n.advertise<sensor_msgs::PointCloud2> ("output", 1);
-        //sensor_msgs::PointCloud2 pc2;
-        //pcl::toROSMsg(*clouds[0],pc2);
-
-        //pcl_cloud.header = pcl_conversions::toPCL(pc2.header);
-        //pub.publish (pc2);
+        //ROS_INFO("CLOUDS NOT EMPTY");
         objectRecognitionRos<objectModelSV>::visualize<pcl::PointNormal>(clouds,n,processing_frame,2,2,"detection",0.01,1.0);
-
-        //objectRecognitionRos<objectModelSV>::visualize<pcl::PointNormal>(graspablePointsClouds,n,_processing_frame,1,1,"graspable_points",0.01,1.0);
     }
 
-    res.object_list=msg_bottomup;
+    res.object_list=graspable_object_list;
+    res.object_list.graspable_objects[
     return true;
 }
 
@@ -208,7 +209,7 @@ int main(int argc, char **argv)
 
     // Working frame
     std::string processing_frame;
-    n_priv.param<std::string>("processing_frame", processing_frame, "/openni_rgb_optical_frame");
+    n_priv.param<std::string>("processing_frame", processing_frame, "/base_link");
     ROS_INFO("processing_frame: %s", processing_frame.c_str());
 
     // Models Descriptors library path

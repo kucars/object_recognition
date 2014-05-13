@@ -5,23 +5,14 @@ catkin_python_setup()
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS actionlib_msgs actionlib message_generation tabletop_object_segmentation_online bottomup_msgs)
+find_package(catkin REQUIRED COMPONENTS actionlib_msgs actionlib tabletop_object_segmentation_online perception_msgs)
 
-add_action_files(
-  DIRECTORY action
-  FILES DetectObjects.action
-)
-
-generate_messages(
-  DEPENDENCIES actionlib_msgs std_msgs tabletop_object_segmentation_online bottomup_msgs# Or other packages containing msgs
-)
 
 catkin_package(CATKIN_DEPENDS 
   tabletop_object_segmentation_online 
   actionlib_msgs
   actionlib
-  message_generation
-  bottomup_msgs
+  perception_msgs
 )
 
 install(PROGRAMS nodes/detect_objects_server nodes/detect_objects_client
