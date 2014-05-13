@@ -296,7 +296,7 @@ bool RosObjectDetails::refinePointCloudServiceCallback(perception_msgs::GetRefin
     pcl::toROSMsg(*pcl_point_cloud_transformed,ros_point_cloud2);
     ros_point_cloud2.header.frame_id=req.point_cloud.header.frame_id;
     ros_point_cloud2.header.stamp=ros::Time::now();
-    sensor_msgs::convertPointCloud2ToPointCloud(ros_point_cloud2,ros_point_cloud);
+    sensor_msgs::convertPointCloud2ToPointCloud(ros_point_cloud2, ros_point_cloud);
     res.point_cloud_object_details=ros_point_cloud;
 
     std::cout << "size out: " << ros_point_cloud.points.size() << std::endl;
@@ -307,13 +307,13 @@ bool RosObjectDetails::refinePointCloudServiceCallback(perception_msgs::GetRefin
 bool RosObjectDetails::computeObjectDetailsServiceCallback(perception_msgs::GetObjectDetails::Request &req, perception_msgs::GetObjectDetails::Response &res)
 {
     ROS_INFO("Compute object details service...");
-    std::cout << "size in: " << req.point_cloud.points.size() << std::endl;
+
+    //std::cout << "size in: " << req.point_cloud.points.size() << std::endl;
     sensor_msgs::PointCloud ros_point_cloud;
     sensor_msgs::PointCloud2 ros_point_cloud2;
 
     pcl::PointCloud<pcl::PointXYZINormal>::Ptr pcl_point_cloud_world(new pcl::PointCloud<pcl::PointXYZINormal>);
     pcl::PointCloud<pcl::PointXYZINormal>::Ptr pcl_point_cloud_object_details_world(new pcl::PointCloud<pcl::PointXYZINormal>);
-
     pcl::PointCloud<pcl::PointXYZINormal>::Ptr pcl_point_cloud_parent(new pcl::PointCloud<pcl::PointXYZINormal>);
 
     ////////////////////////////////////
@@ -323,14 +323,16 @@ bool RosObjectDetails::computeObjectDetailsServiceCallback(perception_msgs::GetO
     // Get parent to world transform
     tf::StampedTransform parent_to_world_transform;
     bool transform_acquired=false;
+    //ROS_INFO_STREAM("teste:"<<req.point_cloud.header.frame_id);
+    //exit(-1);
     while((!transform_acquired) && ros::ok())
     {
         transform_acquired=true;
         try
         {
             ROS_INFO("Wait for transform from %s to %s", req.point_cloud.header.frame_id.c_str(), world_frame_id.c_str());
-            listener.waitForTransform(world_frame_id, req.point_cloud.header.frame_id, ros::Time(0), ros::Duration(5.0));
-            listener.lookupTransform(world_frame_id, req.point_cloud.header.frame_id, ros::Time(0), parent_to_world_transform);
+            listener.waitForTransform(world_frame_id,    req.point_cloud.header.frame_id, ros::Time(0), ros::Duration(5.0));
+            listener.lookupTransform (world_frame_id,    req.point_cloud.header.frame_id, ros::Time(0), parent_to_world_transform);
         }
         catch (tf::TransformException ex)
         {
@@ -348,8 +350,8 @@ bool RosObjectDetails::computeObjectDetailsServiceCallback(perception_msgs::GetO
     tf::poseMsgToEigen(world_pose_message, eigen_world_transform);
 
     // Point cloud data conversion
-    sensor_msgs::convertPointCloudToPointCloud2(req.point_cloud,ros_point_cloud2); // convert to sensor_msgs/PointCloud2
-    pcl::fromROSMsg(ros_point_cloud2, *pcl_point_cloud_parent); // convert to sensor_msgs/PointCloud2 to pcl
+    //sensor_msgs::convertPointCloudToPointCloud2(req.point_cloud, ros_point_cloud2); // convert to sensor_msgs/PointCloud2
+    pcl::fromROSMsg(req.point_cloud, *pcl_point_cloud_parent); // convert to sensor_msgs/PointCloud2 to pcl
 
     pcl_point_cloud_world->header.frame_id=world_frame_id;
     pcl::transformPointCloud(*pcl_point_cloud_parent, *pcl_point_cloud_world, (Eigen::Affine3f) eigen_world_transform);
@@ -357,8 +359,8 @@ bool RosObjectDetails::computeObjectDetailsServiceCallback(perception_msgs::GetO
 
 
     // Point cloud object details data conversion
-    sensor_msgs::convertPointCloudToPointCloud2(req.point_cloud_object_details,ros_point_cloud2); // convert to sensor_msgs/PointCloud2
-    pcl::fromROSMsg(ros_point_cloud2, *pcl_point_cloud_parent); // convert to sensor_msgs/PointCloud2 to pcl
+    //sensor_msgs::convertPointCloudToPointCloud2(req.point_cloud_object_details,req.point_cloud); // convert to sensor_msgs/PointCloud2
+    pcl::fromROSMsg(req.point_cloud, *pcl_point_cloud_parent); // convert to sensor_msgs/PointCloud2 to pcl
 
 
     pcl_point_cloud_object_details_world->header.frame_id=world_frame_id;

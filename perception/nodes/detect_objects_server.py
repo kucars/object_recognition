@@ -82,23 +82,23 @@ class DetectObjectsAction(object):
         print 'No objects found'
         return False
       else:
-        self._result.object_list=resp.object_list
+        #self._result.object_list=resp.object_list
         return resp
     except rospy.ServiceException, e:
         print "Object recognition pose estimation Service call failed: %s"%e
         return False
 
-  def object_details(self,complete_shapes):    
+  def object_details(self,object_list):    
     print 'waiting for object details service...'
     rospy.wait_for_service('ist_compute_object_details')
-    object_list = ist_msgs.msg.ObjectList()
+    #object_list = ist_msgs.msg.ObjectList()
     try:
         object_details = rospy.ServiceProxy('ist_compute_object_details' , perception_msgs.srv.GetObjectDetails)
-        for i in range(0,len(complete_shapes.objects)):
+        for i in range(0,len(object_list.graspable_objects)):
           myReqDet = perception_msgs.srv.GetObjectDetailsRequest()
-          myReqDet.point_cloud = complete_shapes.objects[i].point_cloud
+          myReqDet.point_cloud = object_list.graspable_objects[i].region.cloud
           #myReqDet.object_name = std_msgs.msg.String(str(object_name))
-          myReqDet.point_cloud_object_details = complete_shapes.objects[i].point_cloud_object_details
+          myReqDet.point_cloud_object_details = object_list.graspable_objects[i].region.cloud
           obj_det_resp = object_details(myReqDet)
           #raw_input("Waiting for a keystroke")
           object_list.objects.append(obj_det_resp.object)
@@ -125,7 +125,7 @@ class DetectObjectsAction(object):
         return False
 
     self._result.table = segmentation_resp.table
-    self._result.clusters = segmentation_resp.clusters
+    #self._result.clusters = segmentation_resp.clusters
     # check that preempt has not been requested by the client
     if self._as.is_preempt_requested():
         rospy.loginfo('%s: Preempted' % self._action_name)
@@ -150,7 +150,7 @@ class DetectObjectsAction(object):
         self._as.set_aborted(self._result)
         return False
 
-    self._result.object_list = object_recognition_and_pose_estimation_resp.object_list
+    object_list = object_recognition_and_pose_estimation_resp.object_list
 
     # check that preempt has not been requested by the client
     if self._as.is_preempt_requested():
@@ -172,7 +172,7 @@ class DetectObjectsAction(object):
     self._as.publish_feedback(self._feedback)
    
     # Service call
-    object_list=self.object_details(shape_completion_resp)
+    object_list=self.object_details(object_list)
     if object_list==False:
         #self._as.set_aborted(self._result)
         return False
