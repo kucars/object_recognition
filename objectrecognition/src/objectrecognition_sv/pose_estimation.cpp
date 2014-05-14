@@ -1180,8 +1180,8 @@ std::vector<cluster> poseEstimationSV::poseClustering(std::vector<pose> & bestPo
 	if(filterOn)
 	{
 
-		//std::cout << "Best centroid score: " << centroids[0].votes << std::endl;
-		//std::cout << "Best centroid score(normalized): " << (float) centroids[0].votes/ << std::endl;
+        std::cout << "Best centroid score: " << centroids[0].votes << std::endl;
+        std::cout << "Best centroid score(normalized): " << (float) centroids[0].votes/totalModelVotes << std::endl;
 		clusters.reserve(centroids.size());
 		for(size_t c=0; c < centroids.size(); ++c)
 		//for(size_t c=0; c < 1; ++c)

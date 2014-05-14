@@ -108,9 +108,34 @@ class DetectObjectsAction(object):
     return object_list
 
 
+  def reset_point_cloud(self):
+    print 'waiting for reset point cloud service...'
+    rospy.wait_for_service('ist_reset_point_cloud')
+    try:
+        resetPointCloud = rospy.ServiceProxy('ist_reset_point_cloud',std_srvs.srv.Empty)
+        myReq = std_srvs.srv.EmptyRequest()
+        resetPointCloud(myReq)
+    except rospy.ServiceException, e:
+        print "Reset Point Cloud Service call failed: %s"%e
+        return False
+    
+    return True
         
+
   def execution_steps(self,goal):
        
+    # 0. Reset visualization point clouds  
+    # publish the feedback
+    self._feedback.state="Reseting visualization point clouds..." 
+    self._feedback.progress=0.0
+    self._as.publish_feedback(self._feedback)
+    
+    # Service call
+    reset_resp=self.reset_point_cloud()
+    if reset_resp==False:
+        #self._as.set_aborted(self._result)
+        return False
+
     # 1. Segmentation
 
     # publish the feedback

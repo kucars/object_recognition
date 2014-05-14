@@ -17,14 +17,14 @@ def perception_client():
 	table_region=tabletop_object_segmentation_online.msg.TableRegion() 
 
 	#UPPER SHELF
-	table_region.x_filter_min=-0.3
-	table_region.x_filter_max=0.3
+	table_region.x_filter_min=0.2
+	table_region.x_filter_max=1.0
 
-	table_region.y_filter_min=0.0
-	table_region.y_filter_max=0.6
+	table_region.y_filter_min=-0.4
+	table_region.y_filter_max=0.4
 
-	table_region.z_filter_min=0.0
-	table_region.z_filter_max=2.0
+	table_region.z_filter_min=-0.1
+	table_region.z_filter_max=0.3
 
 	
 

@@ -252,13 +252,13 @@ public:
                     pose_msg.model_id=m+1;
 
                     graspable_object.potential_models.push_back(pose_msg);
+                    //std::cout << hypotheses[m][p].meanPose.votes << std::endl;
                 }
 
                 if(hypotheses[m][0].meanPose.votes>bestHypothesisVotes)
                 {
                     bestHypothesisVotes=hypotheses[m][0].meanPose.votes;
                     bestModelIndex=m;
-                    //bestHypothesisIndex=0;
                 }
 
             }
