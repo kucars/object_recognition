@@ -15,15 +15,101 @@ import time
 #from wsg_gripper.msg import *
 
 
+
+
+def readable_object_discrete_pose(discrete_pose):
+    if(discrete_pose==1):
+        return '  pose: vertical     id: ' + str(discrete_pose)
+    elif(discrete_pose==2):
+        return '  pose: horizontal   id: ' + str(discrete_pose) 
+    else:
+        return '  pose: any          id: ' + str(discrete_pose) 
+
+
+def readable_object_part_task_info(object_task):
+    if(object_task.id==1):
+        return  'id: ' + str(object_task.id) + '  name: pour out                    ' + '  likelihood: ' + str(object_task.likelihood)
+    elif(object_task.id==2):
+        return  'id: ' + str(object_task.id) + '  name: pass                        ' + '  likelihood: ' + str(object_task.likelihood) 
+    elif(object_task.id==3):
+        return  'id: ' + str(object_task.id) + '  name: pour in                     ' + '  likelihood: ' + str(object_task.likelihood) 
+    elif(object_task.id==4):
+        return  'id: ' + str(object_task.id) + '  name: pick place inside upsidedown' + '  likelihood: ' + str(object_task.likelihood)
+    elif(object_task.id==5):
+        return  'id: ' + str(object_task.id) + '  name: pick place inside upright   ' + '  likelihood: ' + str(object_task.likelihood)
+    elif(object_task.id==6):
+        return  'id: ' + str(object_task.id) + '  name: pick place inside sideways  ' + '  likelihood: ' + str(object_task.likelihood)
+    elif(object_task.id==7):
+        return  'id: ' + str(object_task.id) + '  name: pick place on               ' + '  likelihood: ' + str(object_task.likelihood)
+    else:
+        return 'wrong id'
+
+def readable_object_part_tasks_info(object_tasks):
+    temp='tasks: '
+    for task_list_index in range(0,len(object_tasks)):
+        temp=temp + '\n    ' + readable_object_part_task_info(object_tasks[task_list_index])
+    return temp
+
+def readable_object_part_info(object_part):
+    if(object_part.part.id==1):
+        return  'id: ' + str(object_part.part.id) + '  name: top' + '  confidence: ' +  str(object_part.part.confidence) + '\n   ' +  readable_object_part_tasks_info(object_part.tasks)
+    elif(object_part.part.id==2):
+        return  'id: ' + str(object_part.part.id) + '  name: middle' + '  confidence: ' +  str(object_part.part.confidence) + '\n   ' +  readable_object_part_tasks_info(object_part.tasks)
+    elif(object_part.part.id==3):
+        return  'id: ' + str(object_part.part.id) + '  name: bottom' + '  confidence: ' +  str(object_part.part.confidence) + '\n   ' +  readable_object_part_tasks_info(object_part.tasks)
+    elif(object_part.part.id==4):
+        return  'id: ' + str(object_part.part.id) + '  name: handle' + '  confidence: ' +  str(object_part.part.confidence) + '\n   ' +  readable_object_part_tasks_info(object_part.tasks)
+    elif(object_part.part.id==5):
+        return  'id: ' + str(object_part.part.id) + '  name: usable' + '  confidence: ' +  str(object_part.part.confidence) + '\n   ' +  readable_object_part_tasks_info(object_part.tasks)
+    else:
+        return  'id: ' + str(object_part.part.id) + '  name: any   ' + '  confidence: ' +  str(object_part.part.confidence) + '\n   ' +  readable_object_part_tasks_info(object_part.tasks)
+
+def readable_object_parts_info(object_parts):
+    temp='parts: '
+    for part_list_index in range(0,len(object_parts)):
+        temp=temp + '\n   ' + readable_object_part_info(object_parts[part_list_index])
+    return temp
+
+def readable_object_category_info(object_category):
+    return  'id: ' + str(object_category.id) + '  name: ' + str(object_category.name) + '  likelihood: ' + str(object_category.likelihood)
+
+
+def readable_object_categories_info(object_categories):
+    temp='categories: '
+    for category_list_index in range(0,len(object_categories)):
+        temp=temp + '\n    ' + readable_object_category_info(object_categories[category_list_index])
+    return temp
+
+def readable_object_type_info(object_type):
+    return 'type:\n   id:  ' + str(object_type.id)  + '  type name: ' +  str(object_type.type_name) + '  is container: ' +  str(object_type.is_container)
+
+
+def readable_object_info(id,object):
+    return 'object '+str(object.object_id+1)+': \n  '+readable_object_discrete_pose(object.state.discrete_pose)+ '\n  ' + readable_object_type_info(object.data.type) + '\n  ' + readable_object_categories_info(object.data.category_hypotheses) + '\n  ' + readable_object_parts_info(object.data.actionable_parts_data)
+
+def print_objects_info(object_list):
+
+    for object_list_index in range(0,len(object_list.objects)):
+        print 'Object info: \n ' + readable_object_info(object_list_index,object_list.objects[object_list_index])
+
+
+	
+
+
+
+
+
 class DetectObjectsAction(object):
   # create messages that are used to publish feedback/result
   _feedback = perception_msgs.msg.DetectObjectsFeedback()
   _result   = perception_msgs.msg.DetectObjectsResult()
 
+
   def __init__(self, name):
     self._action_name = name
     self._as = actionlib.SimpleActionServer(self._action_name, perception_msgs.msg.DetectObjectsAction, execute_cb=self.execute_cb)
     self._as.start()
+    self._first=True
 
   def execute_cb(self, goal):
 
@@ -51,13 +137,19 @@ class DetectObjectsAction(object):
     else:
         self._as.set_succeeded(self._result)
 
-  def tabletop_segmentation(self):
+  def tabletop_segmentation(self, table):
     print 'waiting for tabletop segmentation service...'
     rospy.wait_for_service('tabletop_segmentation')
 
     try:
       table_top = rospy.ServiceProxy('tabletop_segmentation' , TabletopSegmentation)
-      resp = table_top()
+
+      myReq = TabletopSegmentationRequest()
+      if self._first==False:
+        myReq.table=table
+
+      resp = table_top(myReq)   
+
       if len(resp.clusters) == 0:
         print 'No clusters found'
         return False
@@ -91,7 +183,7 @@ class DetectObjectsAction(object):
   def object_details(self,object_list):    
     print 'waiting for object details service...'
     rospy.wait_for_service('ist_compute_object_details')
-    #object_list = ist_msgs.msg.ObjectList()
+    ist_object_list = ist_msgs.msg.ObjectList()
     try:
         object_details = rospy.ServiceProxy('ist_compute_object_details' , perception_msgs.srv.GetObjectDetails)
         for i in range(0,len(object_list.graspable_objects)):
@@ -101,11 +193,11 @@ class DetectObjectsAction(object):
           myReqDet.point_cloud_object_details = object_list.graspable_objects[i].region.cloud
           obj_det_resp = object_details(myReqDet)
           #raw_input("Waiting for a keystroke")
-          object_list.objects.append(obj_det_resp.object)
+          ist_object_list.objects.append(obj_det_resp.object)
     except rospy.ServiceException, e:
         print "GetObjectDetails Service call failed: %s"%e
         return False
-    return object_list
+    return ist_object_list
 
 
   def reset_point_cloud(self):
@@ -144,11 +236,15 @@ class DetectObjectsAction(object):
     self._as.publish_feedback(self._feedback)
 
     # Service call
-    segmentation_resp=self.tabletop_segmentation()
+
+
+    segmentation_resp=self.tabletop_segmentation(self._result.table)     
+
     if segmentation_resp==False:
         self._as.set_aborted(self._result)
         return False
 
+    self._first=False
     self._result.table = segmentation_resp.table
     #self._result.clusters = segmentation_resp.clusters
     # check that preempt has not been requested by the client
