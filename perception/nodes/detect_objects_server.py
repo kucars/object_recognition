@@ -244,8 +244,8 @@ class DetectObjectsAction(object):
         self._as.set_aborted(self._result)
         return False
 
-    self._first=False
-    self._result.table = segmentation_resp.table
+    #self._first=False
+    #self._result.table = segmentation_resp.table
     #self._result.clusters = segmentation_resp.clusters
     # check that preempt has not been requested by the client
     if self._as.is_preempt_requested():
