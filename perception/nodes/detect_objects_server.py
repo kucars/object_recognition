@@ -131,7 +131,9 @@ class DetectObjectsAction(object):
     ####################################
 
     object_list=self.execution_steps(goal)
+    self._result.object_list=object_list
     if object_list:
+	
         rospy.loginfo('%s: Succeeded' % self._action_name)
         self._as.set_succeeded(self._result)
     else:
@@ -293,11 +295,11 @@ class DetectObjectsAction(object):
     self._as.publish_feedback(self._feedback)
    
     # Service call
-    object_list=self.object_details(object_list)
+    object_recognition_and_pose_estimation_resp=self.object_details(object_list)
     if object_list==False:
         #self._as.set_aborted(self._result)
         return False
-    print_objects_info(object_list)  
+    #print_objects_info(object_list)  
      
     # check that preempt has not been requested by the client
     if self._as.is_preempt_requested():
