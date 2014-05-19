@@ -45,7 +45,9 @@ class DetectObjectsAction(object):
     ####################################
 
     object_list=self.execution_steps(goal)
+    self._result.object_list=object_list
     if object_list:
+	
         rospy.loginfo('%s: Succeeded' % self._action_name)
         self._as.set_succeeded(self._result)
     else:
@@ -91,7 +93,7 @@ class DetectObjectsAction(object):
   def object_details(self,object_list):    
     print 'waiting for object details service...'
     rospy.wait_for_service('ist_compute_object_details')
-    #object_list = ist_msgs.msg.ObjectList()
+    ist_object_list = ist_msgs.msg.ObjectList()
     try:
         object_details = rospy.ServiceProxy('ist_compute_object_details' , perception_msgs.srv.GetObjectDetails)
         for i in range(0,len(object_list.graspable_objects)):
@@ -101,11 +103,11 @@ class DetectObjectsAction(object):
           myReqDet.point_cloud_object_details = object_list.graspable_objects[i].region.cloud
           obj_det_resp = object_details(myReqDet)
           #raw_input("Waiting for a keystroke")
-          object_list.objects.append(obj_det_resp.object)
+          ist_object_list.objects.append(obj_det_resp.object)
     except rospy.ServiceException, e:
         print "GetObjectDetails Service call failed: %s"%e
         return False
-    return object_list
+    return ist_object_list
 
 
   def reset_point_cloud(self):
@@ -197,11 +199,11 @@ class DetectObjectsAction(object):
     self._as.publish_feedback(self._feedback)
    
     # Service call
-    object_list=self.object_details(object_list)
+    object_recognition_and_pose_estimation_resp=self.object_details(object_list)
     if object_list==False:
         #self._as.set_aborted(self._result)
         return False
-    print_objects_info(object_list)  
+    #print_objects_info(object_list)  
      
     # check that preempt has not been requested by the client
     if self._as.is_preempt_requested():

@@ -35,6 +35,7 @@
 #include "serialization.h"
 #include "structs.h"
 #include "point_pair.h"
+#include <shape_msgs/Mesh.h>
 
 inline bool equalFloat(float a, float b)
 {
@@ -69,6 +70,7 @@ class objectModel
 		float maxModelDist;
 		float maxModelDistSquared;
 
+        shape_msgs::MeshPtr modelMesh;
 		pointCloudPointNormalPtr modelCloud;
 		pointCloudPointNormalPtr modelCloudOriginal;
 
@@ -95,7 +97,7 @@ class objectModel
 			radiusSearch=_radiusSearch;
 		}
 
-		objectModel(int _dbId, std::tr1::tuple<pointCloudPointNormalPtr, float, float> & _modelData, bool _symmetric) : id(++idNext), dbId(_dbId), totalSurfaceArea(std::tr1::get<1>(_modelData)), maxModelDist(sqrt(std::tr1::get<2>(_modelData))), maxModelDistSquared(std::tr1::get<2>(_modelData)), modelCloudOriginal(std::tr1::get<0>(_modelData)), symmetric(_symmetric), distanceStep(maxModelDist/distanceBins), distanceStepInverted(distanceBins/maxModelDist), halfDistanceStepSquared((distanceStep/2)*(distanceStep/2))
+        objectModel(int _dbId, std::tr1::tuple<pointCloudPointNormalPtr, float, float, shape_msgs::MeshPtr > & _modelData, bool _symmetric) : id(++idNext), dbId(_dbId), totalSurfaceArea(std::tr1::get<1>(_modelData)), maxModelDist(sqrt(std::tr1::get<2>(_modelData))), maxModelDistSquared(std::tr1::get<2>(_modelData)), modelMesh(std::tr1::get<3>(_modelData)), modelCloudOriginal(std::tr1::get<0>(_modelData)), symmetric(_symmetric), distanceStep(maxModelDist/distanceBins), distanceStepInverted(distanceBins/maxModelDist), halfDistanceStepSquared((distanceStep/2)*(distanceStep/2))
 		{
 			//distanceStep=(1.0)/2.0; // TIRAR
 			//distanceStep=(1.0)/2.0; // TIRAR

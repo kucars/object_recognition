@@ -9,7 +9,7 @@
   <include file="$(find objectrecognition)/launch/object_recognition_pose_estimation_server.launch"/>
 
   <!-- Detect objects action server -->
-  <node pkg="perception" name="detect_objects_server" type="detect_objects_server.py" respawn="true"/>
+  <node pkg="perception" name="detect_objects_server" type="detect_objects_server.py" respawn="true" output="screen"/>
 
   <!-- Object details -->
   <include file="$(find ist_object_details)/launch/ist_object_details.launch"/>

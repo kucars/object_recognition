@@ -17,6 +17,7 @@
 #include <manipulation_msgs/GraspableObjectList.h>
 #include <sstream>
 #include <ist_msgs/ObjectList.h>
+#include <pcl/tracking/particle_filter.h>
 
 
 template <class objectModelT>
@@ -134,6 +135,8 @@ public:
 
         objectRecognitionRos<objectModelSV>::marker_pub = n.advertise<visualization_msgs::Marker>("detector_markers_out", 1);
         service = n.advertiseService("object_recognition_pose_estimation", &PoseEstimationROS::recogntion_pose_estimation, this);
+
+        //pcl::tracking::ParticleFilterTracker<pcl::PointXYZ> tracker;
     }
 
     //////////////////////
@@ -261,6 +264,8 @@ public:
                     bestModelIndex=m;
                 }
 
+                //models_library.objectModels[m]->modelMesh;
+
             }
 
             if(bestHypothesisVotes==0)
@@ -287,6 +292,7 @@ public:
             graspable_object_list.graspable_objects.push_back(graspable_object);
 
             clouds.push_back(cloudOut);
+
 
         }
 
