@@ -674,6 +674,46 @@ private:
         std::cout << "Done" << std::endl;
 
 
+
+
+        shape_msgs::MeshPtr mesh_msg(new shape_msgs::Mesh);
+
+        for(vtkIdType i = 0; i < polygonPolyData->GetNumberOfCells(); ++i)
+        {
+            double p0[3];
+            double p1[3];
+            double p2[3];
+            vtkCell* cell = polygonPolyData->GetCell(i);
+            vtkTriangle* triangle = dynamic_cast<vtkTriangle*>(cell);
+            triangle->GetPoints()->GetPoint(0, p0);
+            triangle->GetPoints()->GetPoint(1, p1);
+            triangle->GetPoints()->GetPoint(2, p2);
+
+            shape_msgs::MeshTriangle triangle_msg;
+            triangle_msg.vertex_indices[0]=triangle->GetPointId(0);
+            triangle_msg.vertex_indices[1]=triangle->GetPointId(1);
+            triangle_msg.vertex_indices[2]=triangle->GetPointId(2);
+            mesh_msg->triangles.push_back(triangle_msg);
+            geometry_msgs::Point point_msg;
+            point_msg.x=p0[0];
+            point_msg.y=p0[1];
+            point_msg.z=p0[2];
+            mesh_msg->vertices.push_back(point_msg);
+            point_msg.x=p1[0];
+            point_msg.y=p1[1];
+            point_msg.z=p1[2];
+            mesh_msg->vertices.push_back(point_msg);
+            point_msg.x=p2[0];
+            point_msg.y=p2[1];
+            point_msg.z=p2[2];
+            mesh_msg->vertices.push_back(point_msg);
+
+            //mesh_msg->triangles
+        }
+
+
+
+
         //////////////////////////////////////////////////////////////////////////
         // SUB DIVIDE TO GUARANTEE UNIFORM SAMPLING AFTER THE DOWNSAMPLING STEP //
         //////////////////////////////////////////////////////////////////////////
@@ -725,44 +765,6 @@ private:
             }
             else ++i;
         }
-
-
-        shape_msgs::MeshPtr mesh_msg(new shape_msgs::Mesh);
-
-        for(vtkIdType i = 0; i < polygonPolyData->GetNumberOfCells(); )
-        {
-            double p0[3];
-            double p1[3];
-            double p2[3];
-            vtkCell* cell = polygonPolyData->GetCell(i);
-            vtkTriangle* triangle = dynamic_cast<vtkTriangle*>(cell);
-            triangle->GetPoints()->GetPoint(0, p0);
-            triangle->GetPoints()->GetPoint(1, p1);
-            triangle->GetPoints()->GetPoint(2, p2);
-
-            shape_msgs::MeshTriangle triangle_msg;
-            triangle_msg.vertex_indices[0]=triangle->GetPointId(0);
-            triangle_msg.vertex_indices[1]=triangle->GetPointId(1);
-            triangle_msg.vertex_indices[2]=triangle->GetPointId(2);
-            mesh_msg->triangles.push_back(triangle_msg);
-            geometry_msgs::Point point_msg;
-            point_msg.x=p0[0];
-            point_msg.y=p0[1];
-            point_msg.z=p0[2];
-            mesh_msg->vertices.push_back(point_msg);
-            point_msg.x=p1[0];
-            point_msg.y=p1[1];
-            point_msg.z=p1[2];
-            mesh_msg->vertices.push_back(point_msg);
-            point_msg.x=p2[0];
-            point_msg.y=p2[1];
-            point_msg.z=p2[2];
-            mesh_msg->vertices.push_back(point_msg);
-
-            //mesh_msg->triangles
-        }
-
-
 
 
 

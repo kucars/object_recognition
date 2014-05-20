@@ -662,9 +662,6 @@ void RosObjectDetails::clearMarkers()
         marker_array.markers.push_back(marker);
 
     }
-
-    std::cout << "lalal" << std::endl;
-
 }
 
 void RosObjectDetails::broadcastTable()
@@ -697,7 +694,7 @@ int main(int argc, char** argv)
     ros::NodeHandle n;
 
     RosObjectDetails objRec(n);
-    ros::Rate r(15);
+    ros::Rate r(30);
 
     while(ros::ok())
     {
