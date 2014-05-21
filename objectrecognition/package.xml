@@ -34,7 +34,11 @@
   <build_depend>bottomup_msgs</build_depend>
   <build_depend>rosconsole</build_depend>
   <build_depend>perception_msgs</build_depend>
-
+  <build_depend>moveit_ros_planning</build_depend>
+  <build_depend>moveit_ros_planning_interface</build_depend>
+  <build_depend>moveit_ros_move_group</build_depend>
+  <build_depend>moveit_ros</build_depend>
+  <build_depend>shape_msgs</build_depend>
   <!--<run_depend>libpcl-all</run_depend>
   <run_depend>pcl_ros</run_depend>-->
   <run_depend>pcl_ros</run_depend>
@@ -50,6 +54,13 @@
   <run_depend>tabletop_object_segmentation_online</run_depend>
   <run_depend>rosconsole</run_depend>
   <run_depend>perception_msgs</run_depend>
+  <run_depend>moveit_ros_planning_interface</run_depend>
+  <run_depend>moveit_ros_planning</run_depend>
+  <run_depend>moveit_ros_move_group</run_depend>
+  <run_depend>moveit_ros</run_depend>
+  <run_depend>moveit_msgs</run_depend>
+  <run_depend>shape_msgs</run_depend>
+
   <!-- <depend package="orca_proxy"/>-->
   <export>
 	<!--<cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -L${prefix}/lib -Wl,-rpath,${prefix}/lib -lobjectrecognition_sv -lobjectrecognition_si"/>-->

@@ -673,11 +673,7 @@ private:
         }
         std::cout << "Done" << std::endl;
 
-
-
-
         shape_msgs::MeshPtr mesh_msg(new shape_msgs::Mesh);
-
         for(vtkIdType i = 0; i < polygonPolyData->GetNumberOfCells(); ++i)
         {
             double p0[3];
@@ -693,35 +689,30 @@ private:
             triangle_msg.vertex_indices[0]=triangle->GetPointId(0);
             triangle_msg.vertex_indices[1]=triangle->GetPointId(1);
             triangle_msg.vertex_indices[2]=triangle->GetPointId(2);
+
             mesh_msg->triangles.push_back(triangle_msg);
-            geometry_msgs::Point point_msg;
-            point_msg.x=p0[0];
-            point_msg.y=p0[1];
-            point_msg.z=p0[2];
-            mesh_msg->vertices.push_back(point_msg);
-            point_msg.x=p1[0];
-            point_msg.y=p1[1];
-            point_msg.z=p1[2];
-            mesh_msg->vertices.push_back(point_msg);
-            point_msg.x=p2[0];
-            point_msg.y=p2[1];
-            point_msg.z=p2[2];
-            mesh_msg->vertices.push_back(point_msg);
-
-            //mesh_msg->triangles
+            geometry_msgs::Point point_msg1;
+            point_msg1.x=p0[0];
+            point_msg1.y=p0[1];
+            point_msg1.z=p0[2];
+            mesh_msg->vertices.push_back(point_msg1);
+            geometry_msgs::Point point_msg2;
+            point_msg2.x=p1[0];
+            point_msg2.y=p1[1];
+            point_msg2.z=p1[2];
+            mesh_msg->vertices.push_back(point_msg2);
+            geometry_msgs::Point point_msg3;
+            point_msg3.x=p2[0];
+            point_msg3.y=p2[1];
+            point_msg3.z=p2[2];
+            mesh_msg->vertices.push_back(point_msg3);
         }
-
-
-
 
         //////////////////////////////////////////////////////////////////////////
         // SUB DIVIDE TO GUARANTEE UNIFORM SAMPLING AFTER THE DOWNSAMPLING STEP //
         //////////////////////////////////////////////////////////////////////////
 
         std::cout << " number of points before subdividing(interpolating):"<< polygonPolyData->GetNumberOfPoints()<< std::endl;
-
-
-
 
         for(vtkIdType i = 0; i < polygonPolyData->GetNumberOfCells(); )
         {

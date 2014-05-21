@@ -155,10 +155,6 @@ class objectModel
 				std::cout << " Object with db id=" << dbId << " is not symmetric" << std::endl;
 		}
 
-
-
-
-
 		objectModel()
 		{
 			cloudWithNormals=pointCloudPointNormalPtr (new pointCloudPointNormal);

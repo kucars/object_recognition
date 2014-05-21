@@ -15,6 +15,11 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   pcl_conversions
   perception_msgs
+  moveit_ros_planning
+  moveit_ros_planning_interface
+  moveit_ros_move_group
+  moveit_msgs
+  shape_msgs
 )
 
 ## System dependencies are found with CMake's conventions

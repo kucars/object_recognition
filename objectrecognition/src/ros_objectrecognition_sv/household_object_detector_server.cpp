@@ -18,14 +18,29 @@
 #include <sstream>
 #include <ist_msgs/ObjectList.h>
 #include <pcl/tracking/particle_filter.h>
+#include <visualization_msgs/Marker.h>
 
 
+#include <moveit/move_group_interface/move_group.h>
+#include <moveit/planning_scene_interface/planning_scene_interface.h>
+
+#include <moveit_msgs/DisplayRobotState.h>
+#include <moveit_msgs/DisplayTrajectory.h>
+
+#include <moveit_msgs/AttachedCollisionObject.h>
+#include <moveit_msgs/CollisionObject.h>
+#include <eigen_conversions/eigen_msg.h>
+#include <shape_msgs/Mesh.h>
 template <class objectModelT>
 ros::Publisher objectRecognitionRos<objectModelT>::marker_pub;
 
 
 class PoseEstimationROS
 {
+    //moveit::planning_interface::MoveGroup group;
+    // We will use the :planning_scene_interface:`PlanningSceneInterface`
+    // class to deal directly with the world.
+    moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
 public:
     /////////////////////////
     // Database parameters //
@@ -73,7 +88,7 @@ public:
 
     std::vector< boost::shared_ptr<poseEstimationSV> > poseEstimators;
 
-    PoseEstimationROS(ros::NodeHandle & n_, ros::NodeHandle & n_priv_) : n_priv(n_priv_), n(n_)
+    PoseEstimationROS(ros::NodeHandle & n_, ros::NodeHandle & n_priv_) : n_priv(n_priv_), n(n_)//, group("arm")
     {
         ////////////////////////////
         // Data in/out parameters //
@@ -294,6 +309,41 @@ public:
             clouds.push_back(cloudOut);
 
 
+            // Getting Basic Information
+            // ^^^^^^^^^^^^^^^^^^^^^^^^^
+            //
+            // We can print the name of the reference frame for this robot.
+
+            //group.setPoseReferenceFrame("base_link");
+            //group.setEndEffectorLink("end_effector");
+
+
+            // Adding/Removing Objects and Attaching/Detaching Objects
+            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            // First, we will define the collision object message.
+            moveit_msgs::CollisionObject collision_object;
+            collision_object.header.frame_id = "base_link";//group.getPlanningFrame();
+
+            collision_object.id = "object_1";
+
+            Eigen::Affine3f pose_eigen= hypotheses[bestModelIndex][bestHypothesisIndex].meanPose.getTransformation();
+            geometry_msgs::Pose object_pose;
+            tf::poseEigenToMsg((Eigen::Affine3d)pose_eigen,object_pose);
+            //Eigen::Affine3f transf=hypotheses[0][0].meanPose.getTransformation();
+            //tf::poseEigenToMsg((Eigen::Affine3d) transf,object_pose);
+            //shape_msgs::MeshPtr mesh_ptr = models_library.objectModels[0]->modelMesh;
+            collision_object.meshes.push_back(*(models_library.objectModels[0]->modelMesh));
+            collision_object.mesh_poses.push_back(object_pose);
+            collision_object.operation = collision_object.ADD;
+
+            std::vector<moveit_msgs::CollisionObject> collision_objects;
+            collision_objects.push_back(collision_object);
+
+            // Now, let's add the collision object into the world
+            ROS_INFO("Add an object into the world");
+            planning_scene_interface.addCollisionObjects(collision_objects);
+
+
         }
 
         ///////////////////////
@@ -307,6 +357,12 @@ public:
         }
 
         res.object_list=graspable_object_list;
+
+
+
+
+
+
         //res.object_list.graspable_objects[
         return true;
     }
