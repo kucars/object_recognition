@@ -341,7 +341,7 @@ public:
 
             // Now, let's add the collision object into the world
             ROS_INFO("Add an object into the world");
-            planning_scene_interface.addCollisionObjects(collision_objects);
+            //planning_scene_interface.addCollisionObjects(collision_objects);
 
 
         }
