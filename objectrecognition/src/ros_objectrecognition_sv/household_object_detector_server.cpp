@@ -342,8 +342,6 @@ public:
             // Now, let's add the collision object into the world
             ROS_INFO("Add an object into the world");
             //planning_scene_interface.addCollisionObjects(collision_objects);
-
-
         }
 
         ///////////////////////
@@ -358,18 +356,9 @@ public:
 
         res.object_list=graspable_object_list;
 
-
-
-
-
-
         //res.object_list.graspable_objects[
         return true;
     }
-
-
-
-
 
 private:
     std::string convertInt(int number)
