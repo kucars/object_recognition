@@ -31,8 +31,28 @@
 #include <moveit_msgs/CollisionObject.h>
 #include <eigen_conversions/eigen_msg.h>
 #include <shape_msgs/Mesh.h>
+
+
+
+#include <iostream>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pcl/registration/icp.h>
+
 template <class objectModelT>
 ros::Publisher objectRecognitionRos<objectModelT>::marker_pub;
+
+pcl::PointCloud<pcl::PointNormal>::Ptr refine_icp(pcl::PointCloud<pcl::PointNormal>::Ptr cloud_source,
+                                                  pcl::PointCloud<pcl::PointNormal>::Ptr cloud_target)
+{
+    pcl::IterativeClosestPoint<pcl::PointNormal, pcl::PointNormal> icp;
+    icp.setInputSource(cloud_source);
+    icp.setInputTarget(cloud_target);
+    pcl::PointCloud<pcl::PointNormal>::Ptr Final(new pcl::PointCloud<pcl::PointNormal>);
+    std::cout << "has converged:" << icp.hasConverged() << " score: " <<
+    icp.getFitnessScore() << std::endl;
+    return Final;
+}
 
 
 class PoseEstimationROS
@@ -151,6 +171,7 @@ public:
         objectRecognitionRos<objectModelSV>::marker_pub = n.advertise<visualization_msgs::Marker>("detector_markers_out", 1);
         service = n.advertiseService("object_recognition_pose_estimation", &PoseEstimationROS::recogntion_pose_estimation, this);
 
+        point_cloud_pub = n.advertise<pcl::PointCloud<pcl::PointNormal> >("teste",2);
         //pcl::tracking::ParticleFilterTracker<pcl::PointXYZ> tracker;
     }
 
@@ -166,6 +187,8 @@ public:
 
         pcl::PointXYZ min_pt, max_pt;
         std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> clouds;
+        std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clusters;
+
         int bestModelIndex;
         int bestHypothesisIndex;
         float bestHypothesisVotes;
@@ -307,7 +330,7 @@ public:
             graspable_object_list.graspable_objects.push_back(graspable_object);
 
             clouds.push_back(cloudOut);
-
+            clusters.push_back(sceneClusterCloud);
 
             // Getting Basic Information
             // ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -356,6 +379,29 @@ public:
             objectRecognitionRos<objectModelSV>::visualize<pcl::PointNormal>(clouds,n,processing_frame,2,2,"detection",0.01,1.0);
         }
 
+        // Create the normal estimation class, and pass the input dataset to it
+        pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+        ne.setInputCloud (clusters[0]);
+
+        // Create an empty kdtree representation, and pass it to the normal estimation object.
+        // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+        pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+        ne.setSearchMethod (tree);
+
+        // Output datasets
+        pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+
+        // Use all neighbors in a sphere of radius 3cm
+        ne.setRadiusSearch (0.03);
+
+        // Compute the features
+        ne.compute (*cloud_normals);
+        pcl::PointCloud<pcl::PointNormal>::Ptr cluster_with_normals;
+        pcl::concatenateFields(*clusters[0], *cloud_normals, *cluster_with_normals);
+        ROS_INFO("OLA");
+        pcl::PointCloud<pcl::PointNormal>::Ptr refined_point_cloud=refine_icp(clouds[0], cluster_with_normals);
+        refined_point_cloud->header.frame_id=processing_frame;
+        //point_cloud_pub.publish(refined_point_cloud);
         res.object_list=graspable_object_list;
 
 
@@ -382,6 +428,7 @@ private:
     typedef std::vector< std::vector<cluster> > Hypotheses;
     typedef boost::function<bool(perception_msgs::PoseEstimation::Request&, perception_msgs::PoseEstimation::Response&)> recogntion_pose_estimation_callback;
 
+    ros::Publisher point_cloud_pub;
 };
 
 int main(int argc, char **argv)
@@ -398,3 +445,15 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
