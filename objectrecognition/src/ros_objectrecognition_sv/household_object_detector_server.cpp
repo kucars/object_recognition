@@ -357,8 +357,6 @@ public:
         res.object_list=graspable_object_list;
 
 
-        0.70456; 0.21208; 0.60488
-        -0.23468; 0.66706; 0.23463; 0.66701
 
         return true;
     }

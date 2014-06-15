@@ -133,11 +133,11 @@ class DetectObjectsAction(object):
     object_list=self.execution_steps(goal)
     self._result.object_list=object_list
     if object_list:
-	
         rospy.loginfo('%s: Succeeded' % self._action_name)
         self._as.set_succeeded(self._result)
-    else:
-        self._as.set_succeeded(self._result)
+    #else:
+    #    rospy.loginfo('%s: Failed' % self._action_name)
+    #    self._as.set_aborted(self._result)
 
   def tabletop_segmentation(self, table):
     print 'waiting for tabletop segmentation service...'
