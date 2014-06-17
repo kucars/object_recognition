@@ -135,6 +135,7 @@ class DetectObjectsAction(object):
     if object_list:
         rospy.loginfo('%s: Succeeded' % self._action_name)
         self._as.set_succeeded(self._result)
+	return True
     #else:
     #    rospy.loginfo('%s: Failed' % self._action_name)
     #    self._as.set_aborted(self._result)

@@ -182,7 +182,6 @@ public:
     bool recogntion_pose_estimation(perception_msgs::PoseEstimation::Request  &req,
                                     perception_msgs::PoseEstimation::Response &res)
     {
-        ROS_INFO("inside the callback");
         household_objects_database_msgs::DatabaseModelPoseList pose_list;
 
         pcl::PointXYZ min_pt, max_pt;
@@ -363,8 +362,8 @@ public:
             collision_objects.push_back(collision_object);
 
             // Now, let's add the collision object into the world
-            ROS_INFO("Add an object into the world");
-            planning_scene_interface.addCollisionObjects(collision_objects);
+            //ROS_INFO("Add an object into the world");
+            //planning_scene_interface.addCollisionObjects(collision_objects);
         }
 
         ///////////////////////
@@ -378,7 +377,7 @@ public:
         }
 
         // Create the normal estimation class, and pass the input dataset to it
-        pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+        /*pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
         ne.setInputCloud (clusters[0]);
 
         // Create an empty kdtree representation, and pass it to the normal estimation object.
@@ -394,20 +393,13 @@ public:
 
         // Compute the features
         ne.compute (*cloud_normals);
-        pcl::PointCloud<pcl::PointNormal>::Ptr cluster_with_normals;
+        pcl::PointCloud<pcl::PointNormal>::Ptr cluster_with_normals(new pcl::PointCloud<pcl::PointNormal>);
         pcl::concatenateFields(*clusters[0], *cloud_normals, *cluster_with_normals);
-        ROS_INFO("OLA");
         pcl::PointCloud<pcl::PointNormal>::Ptr refined_point_cloud=refine_icp(clouds[0], cluster_with_normals);
         refined_point_cloud->header.frame_id=processing_frame;
-        //point_cloud_pub.publish(refined_point_cloud);
+            point_cloud_pub.publish(refined_point_cloud);*/
+
         res.object_list=graspable_object_list;
-
-
-<<<<<<< HEAD
-=======
-        //0.70456; 0.21208; 0.60488
-        //-0.23468; 0.66706; 0.23463; 0.66701
->>>>>>> 9a3264935a3ba0c8cb5905ca4c4db68708917932
 
         return true;
     }

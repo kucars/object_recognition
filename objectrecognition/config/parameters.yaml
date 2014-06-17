@@ -1,4 +1,4 @@
-reference_points_percentage: 1.0
+reference_points_percentage: 0.8
 angle_bins: 30
 distance_bins: 15
 pose_angle_bins: 30
@@ -8,6 +8,6 @@ neighbours: 10
 radius_search: false
 filter_on: false
 hypotheses_per_model: 20
-processing_frame: /base_link
+processing_frame: /camera_link
 models_database_file: ikea.test
 models_specification_file: models.xml
