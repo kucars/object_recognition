@@ -50,7 +50,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr refine_icp(pcl::PointCloud<pcl::PointNorm
     icp.setInputTarget(cloud_target);
     pcl::PointCloud<pcl::PointNormal>::Ptr Final(new pcl::PointCloud<pcl::PointNormal>);
     std::cout << "has converged:" << icp.hasConverged() << " score: " <<
-    icp.getFitnessScore() << std::endl;
+                 icp.getFitnessScore() << std::endl;
     return Final;
 }
 
@@ -377,7 +377,7 @@ public:
         }
 
         // Create the normal estimation class, and pass the input dataset to it
-        /*pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+        pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
         ne.setInputCloud (clusters[0]);
 
         // Create an empty kdtree representation, and pass it to the normal estimation object.
@@ -393,11 +393,11 @@ public:
 
         // Compute the features
         ne.compute (*cloud_normals);
-        pcl::PointCloud<pcl::PointNormal>::Ptr cluster_with_normals(new pcl::PointCloud<pcl::PointNormal>);
+        /*pcl::PointCloud<pcl::PointNormal>::Ptr cluster_with_normals(new pcl::PointCloud<pcl::PointNormal>);
         pcl::concatenateFields(*clusters[0], *cloud_normals, *cluster_with_normals);
         pcl::PointCloud<pcl::PointNormal>::Ptr refined_point_cloud=refine_icp(clouds[0], cluster_with_normals);
         refined_point_cloud->header.frame_id=processing_frame;
-            point_cloud_pub.publish(refined_point_cloud);*/
+        point_cloud_pub.publish(refined_point_cloud);*/
 
         res.object_list=graspable_object_list;
 
