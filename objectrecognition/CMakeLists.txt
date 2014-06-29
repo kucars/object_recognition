@@ -68,6 +68,8 @@ add_library(objectrecognition_sv
 	src/${PROJECT_NAME}_sv/point_pair.cpp  
 	)
 
+
+
 #add_library(objectrecognition_si 
 #	src/objectrecognition_si/object_model.cpp 
 #	src/objectrecognition_si/pose_estimation.cpp 
@@ -94,4 +96,8 @@ target_link_libraries(obj_to_ply  -lm ${Boost_LIBRARIES} ${PCL_LIBRARIES})
 
 add_executable(upsampling src/upsampling.cpp)
 target_link_libraries(upsampling  ${Boost_LIBRARIES} ${PCL_LIBRARIES} -lpq)
+
+
+add_executable(particle_filter src/ros_objectrecognition_sv/particle_filter.cpp)
+target_link_libraries(particle_filter ${Boost_LIBRARIES}  ${PCL_LIBRARIES} ${catkin_LIBRARIES})
 

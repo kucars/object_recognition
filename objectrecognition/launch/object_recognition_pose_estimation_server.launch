@@ -8,7 +8,7 @@
 	<!-- topic where the markers go -->
 	<arg name="detector_markers_out" default="detector_markers" />
 
-	<node pkg="objectrecognition" name="object_recognition_pose_estimation_server" type="object_recognition_pose_estimation_server" respawn="true" >
+	<node pkg="objectrecognition" name="object_recognition_pose_estimation_server" type="object_recognition_pose_estimation_server" respawn="true" output="screen" >
 		<!--database parameters -->
 		<rosparam command="load" file="$(find objectrecognition)/config/db.yaml"/>
 		<rosparam command="load" file="$(find objectrecognition)/config/parameters.yaml"/>

@@ -276,13 +276,13 @@ Tic();
 	cloudNormals=model->computeSceneNormals(cloudDownsampled);
 	std::cout<< "Done" << endl;
 
-	/*boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 = objectModel::viewportsVis(cloudNormals);
+    /*boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 = objectModel::viewportsVis(cloudNormals);
 
   	while (!viewer2->wasStopped ())
   	{
    		viewer2->spinOnce (100);
     		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
-  	}*/
+    }*/
 
 	/*boost::shared_ptr<pcl_visualization::PCLVisualizer> viewer2 = objectModel::viewportsVis(model->modelCloud);
 

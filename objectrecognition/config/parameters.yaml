@@ -1,4 +1,4 @@
-reference_points_percentage: 0.8
+reference_points_percentage: 0.1
 angle_bins: 30
 distance_bins: 15
 pose_angle_bins: 30

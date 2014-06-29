@@ -369,13 +369,13 @@ void objectModelSV::train()
 	computeNormals(modelCloudPoint,modelCloud);
 	std::cout << "  Done" << std::endl;
 
-	/*viewer2 = objectModel::viewportsVis(modelCloud);
+    /*boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 = objectModel::viewportsVis(modelCloud);
 
   	while (!viewer2->wasStopped ())
   	{
    		viewer2->spinOnce (100);
     		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
-  	}*/
+    }*/
 
 
 

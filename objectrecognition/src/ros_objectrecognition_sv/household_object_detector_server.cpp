@@ -17,7 +17,6 @@
 #include <manipulation_msgs/GraspableObjectList.h>
 #include <sstream>
 #include <ist_msgs/ObjectList.h>
-#include <pcl/tracking/particle_filter.h>
 #include <visualization_msgs/Marker.h>
 
 
@@ -42,15 +41,52 @@
 template <class objectModelT>
 ros::Publisher objectRecognitionRos<objectModelT>::marker_pub;
 
-pcl::PointCloud<pcl::PointNormal>::Ptr refine_icp(pcl::PointCloud<pcl::PointNormal>::Ptr cloud_source,
-                                                  pcl::PointCloud<pcl::PointNormal>::Ptr cloud_target)
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr refine_icp(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_source,
+                                                  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_target)
 {
-    pcl::IterativeClosestPoint<pcl::PointNormal, pcl::PointNormal> icp;
+    ROS_INFO("ENTREI");
+    pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+    ROS_INFO("ENTREI1");
+
     icp.setInputSource(cloud_source);
     icp.setInputTarget(cloud_target);
-    pcl::PointCloud<pcl::PointNormal>::Ptr Final(new pcl::PointCloud<pcl::PointNormal>);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr Final(new pcl::PointCloud<pcl::PointXYZ>);
+
+    icp.setRANSACOutlierRejectionThreshold(0.003);
+    icp.setMaximumIterations(1000);
+    icp.align(*Final);
+    ROS_INFO("ENTREI2");
+
     std::cout << "has converged:" << icp.hasConverged() << " score: " <<
                  icp.getFitnessScore() << std::endl;
+      std::cout << icp.getFinalTransformation() << std::endl;
+    return Final;
+}
+
+
+
+pcl::PointCloud<pcl::PointNormal>::Ptr refine_icp_normals(pcl::PointCloud<pcl::PointNormal>::Ptr cloud_source,
+                                                  pcl::PointCloud<pcl::PointNormal>::Ptr cloud_target)
+{
+    ROS_INFO("ENTREI");
+    pcl::IterativeClosestPoint<pcl::PointNormal, pcl::PointNormal> icp;
+    ROS_INFO("ENTREI1");
+
+    icp.setInputSource(cloud_source);
+    icp.setInputTarget(cloud_target);
+
+    pcl::PointCloud<pcl::PointNormal>::Ptr Final(new pcl::PointCloud<pcl::PointNormal>);
+
+    icp.setRANSACOutlierRejectionThreshold(0.003);
+    icp.setMaximumIterations(1000);
+    icp.align(*Final);
+    ROS_INFO("ENTREI2");
+
+    std::cout << "has converged:" << icp.hasConverged() << " score: " <<
+                 icp.getFitnessScore() << std::endl;
+      std::cout << icp.getFinalTransformation() << std::endl;
     return Final;
 }
 
@@ -115,7 +151,7 @@ public:
         ////////////////////////////
 
         // Working frame
-        n_priv.param<std::string>("processing_frame", processing_frame, "/base_link");
+        n_priv.param<std::string>("processing_frame", processing_frame, "/camera_link");
 
         // Models Descriptors library path
         n_priv.param<std::string>("models_database_path", models_database_path, "/home/");
@@ -344,7 +380,7 @@ public:
             // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
             // First, we will define the collision object message.
             moveit_msgs::CollisionObject collision_object;
-            collision_object.header.frame_id = "base_link";//group.getPlanningFrame();
+            collision_object.header.frame_id = processing_frame;//group.getPlanningFrame();
 
             collision_object.id = "object_1";
 
@@ -393,11 +429,35 @@ public:
 
         // Compute the features
         ne.compute (*cloud_normals);
+
+        ROS_INFO_STREAM("PROCESSING_FRAME:" << processing_frame);
         /*pcl::PointCloud<pcl::PointNormal>::Ptr cluster_with_normals(new pcl::PointCloud<pcl::PointNormal>);
         pcl::concatenateFields(*clusters[0], *cloud_normals, *cluster_with_normals);
-        pcl::PointCloud<pcl::PointNormal>::Ptr refined_point_cloud=refine_icp(clouds[0], cluster_with_normals);
+        pcl::PointCloud<pcl::PointNormal>::Ptr refined_point_cloud=refine_icp_normals(clouds[0], cluster_with_normals);
         refined_point_cloud->header.frame_id=processing_frame;
         point_cloud_pub.publish(refined_point_cloud);*/
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_test(new pcl::PointCloud<pcl::PointXYZ>);
+        for(int i =0; i< clouds[0]->size(); ++i)
+        {
+            pcl::PointXYZ point(clouds[0]->points[i].x,clouds[0]->points[i].y,clouds[0]->points[i].z);
+            point_cloud_test->points.push_back(point);
+        }
+
+        //Downsample cluster...
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloudDownsampled(new pcl::PointCloud<pcl::PointXYZ> ());
+        // Create the filtering object
+        pcl::VoxelGrid<pcl::PointXYZ> sor;
+        sor.setInputCloud (clusters[0]);
+        sor.setLeafSize (models_library.objectModels[0]->distanceStep,
+                         models_library.objectModels[0]->distanceStep,
+                         models_library.objectModels[0]->distanceStep);
+
+        sor.filter (*cloudDownsampled);
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr refined_point_cloud=refine_icp(point_cloud_test, cloudDownsampled);
+        refined_point_cloud->header.frame_id=processing_frame;
+        point_cloud_pub.publish(refined_point_cloud);
 
         res.object_list=graspable_object_list;
 
@@ -405,6 +465,7 @@ public:
     }
 
 private:
+
     std::string convertInt(int number)
     {
         std::stringstream ss;//create a stringstream

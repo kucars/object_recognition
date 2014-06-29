@@ -94,8 +94,6 @@ public:
     {
         tree = boost::shared_ptr<pcl::search::Search<pcl::PointXYZ> > (new pcl::search::KdTree<pcl::PointXYZ>);
         point_cloud_sub_ = n_.subscribe("/camera/depth_registered/points", 10, &RegionGrowingSegmentationRos::pointCloudCallback, this);
-
-
     }
 
 };
