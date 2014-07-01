@@ -1,8 +1,8 @@
 #include <ros_objectrecognition/particle_filter.h>
 #include <pcl/io/vtk_lib_io.h>
 
-void
-usage (char** argv)
+
+void usage (char** argv)
 {
     std::cout << "usage: " << argv[0] << " <device_id> [-C] [-g]\n\n";
     std::cout << " -C: initialize the pointcloud to track without plane segmentation"
@@ -17,8 +17,7 @@ usage (char** argv)
               << std::endl;
 }
 
-int
-main (int argc, char** argv)
+int main (int argc, char** argv)
 {
     bool use_convex_hull = true;
     bool visualize_non_downsample = false;
@@ -30,7 +29,8 @@ main (int argc, char** argv)
     std::string mesh_file_vtk_="/home/kuri/catkin_ws/devel/lib/objectrecognition/coke_can.ply";
     pcl::PolygonMesh mesh;
     pcl::io::loadPolygonFilePLY(mesh_file_vtk_, mesh);
-
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr model_cloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
+    pcl::fromPCLPointCloud2(mesh.cloud, *model_cloud);
     if (pcl::console::find_argument (argc, argv, "-C") > 0)
         use_convex_hull = false;
     if (pcl::console::find_argument (argc, argv, "-D") > 0)
@@ -55,9 +55,11 @@ main (int argc, char** argv)
     }
 
     // open kinect
+    //pcl::PointXYZRGBA
     OpenNISegmentTracking<pcl::PointXYZRGBA> v (device_id, 8, downsampling_grid_size,
-                                                use_convex_hull,
-                                                visualize_non_downsample, visualize_particles,
-                                                use_fixed);
+                                            use_convex_hull,
+                                            visualize_non_downsample, visualize_particles,
+                                            use_fixed,
+                                            model_cloud);
     v.run ();
 }
