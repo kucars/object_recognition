@@ -642,7 +642,7 @@ public:
             //cloud_pass_downsampled_ = cloud_pass_;
             gridSampleApprox (cloud_pass_, *cloud_pass_downsampled_, downsampling_grid_size_);
 
-            //gridSampleApprox (model_cloud_, *cloud_pass_downsampled_, downsampling_grid_size_);
+            //gridSampleApprox(model_cloud_, *cloud_pass_downsampled_, downsampling_grid_size_);
 
             //std::cout << "cloud_pass_downsampled_: "<< cloud_pass_downsampled_->size()<< std::endl;
 

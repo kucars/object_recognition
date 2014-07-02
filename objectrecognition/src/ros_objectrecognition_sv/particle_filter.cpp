@@ -56,10 +56,10 @@ int main (int argc, char** argv)
 
     // open kinect
     //pcl::PointXYZRGBA
-    OpenNISegmentTracking<pcl::PointXYZRGBA> v (device_id, 8, downsampling_grid_size,
-                                            use_convex_hull,
-                                            visualize_non_downsample, visualize_particles,
-                                            use_fixed,
-                                            model_cloud);
+    OpenNISegmentTracking<pcl::PointXYZRGBA> v(device_id, 8, downsampling_grid_size,
+                                               use_convex_hull,
+                                               visualize_non_downsample, visualize_particles,
+                                               use_fixed,
+                                               model_cloud);
     v.run ();
 }
