@@ -1,6 +1,8 @@
 #include <ros_objectrecognition/particle_filter.h>
 #include <pcl/io/vtk_lib_io.h>
 
+//typedef  pcl::PointNormal PointType;
+typedef pcl::PointXYZRGBA PointType;
 
 void usage (char** argv)
 {
@@ -29,8 +31,10 @@ int main (int argc, char** argv)
     std::string mesh_file_vtk_="/home/kuri/catkin_ws/devel/lib/objectrecognition/coke_can.ply";
     pcl::PolygonMesh mesh;
     pcl::io::loadPolygonFilePLY(mesh_file_vtk_, mesh);
-    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr model_cloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
+    pcl::PointCloud<PointType>::Ptr model_cloud(new pcl::PointCloud<PointType>);
     pcl::fromPCLPointCloud2(mesh.cloud, *model_cloud);
+
+
     if (pcl::console::find_argument (argc, argv, "-C") > 0)
         use_convex_hull = false;
     if (pcl::console::find_argument (argc, argv, "-D") > 0)
@@ -56,7 +60,7 @@ int main (int argc, char** argv)
 
     // open kinect
     //pcl::PointXYZRGBA
-    OpenNISegmentTracking<pcl::PointXYZRGBA> v(device_id, 8, downsampling_grid_size,
+    OpenNISegmentTracking<PointType> v(device_id, 8, downsampling_grid_size,
                                                use_convex_hull,
                                                visualize_non_downsample, visualize_particles,
                                                use_fixed,

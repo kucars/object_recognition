@@ -200,7 +200,7 @@ public:
 
         boost::shared_ptr<HSVColorCoherence<RefPointType> > color_coherence
                 = boost::shared_ptr<HSVColorCoherence<RefPointType> > (new HSVColorCoherence<RefPointType> ());
-        color_coherence->setWeight (0.1);
+        color_coherence->setWeight (0.01);
         coherence->addPointCoherence (color_coherence);
 
         //boost::shared_ptr<pcl::search::KdTree<RefPointType> > search (new pcl::search::KdTree<RefPointType> (false));
@@ -478,7 +478,7 @@ public:
     {
         pcl::ExtractPolygonalPrismData<PointType> polygon_extract;
         pcl::PointIndices::Ptr inliers_polygon (new pcl::PointIndices ());
-        polygon_extract.setHeightLimits (0.01, 10.0);
+        polygon_extract.setHeightLimits (0.02, 10.0);
         polygon_extract.setInputPlanarHull (cloud_hull);
         polygon_extract.setInputCloud (cloud);
         polygon_extract.segment (*inliers_polygon);
@@ -618,10 +618,10 @@ public:
                     //pcl::transformPointCloudWithNormals<RefPointType> (*ref_cloud, *transed_ref, trans.inverse());
                     pcl::transformPointCloud<RefPointType> (*nonzero_ref, *transed_ref, trans.inverse());
                     CloudPtr transed_ref_downsampled (new Cloud);
-                    gridSample (transed_ref, *transed_ref_downsampled, downsampling_grid_size_);
+                    gridSample (model_cloud_, *transed_ref_downsampled, downsampling_grid_size_);
                     tracker_->setReferenceCloud (transed_ref_downsampled);
                     tracker_->setTrans (trans);
-                    reference_ = transed_ref;
+                    reference_ = transed_ref_downsampled;
                     tracker_->setMinIndices (int (ref_cloud->points.size ()) / 2);
                 }
                 else
