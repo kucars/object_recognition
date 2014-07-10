@@ -1,0 +1,11 @@
+# The raw cluster detected in the scan
+sensor_msgs/PointCloud point_cloud
+
+tabletop_object_detector/Table table
+
+#object name (only for testing purposes)
+std_msgs/String object_name
+---
+# Refined cluster
+sensor_msgs/PointCloud point_cloud
+

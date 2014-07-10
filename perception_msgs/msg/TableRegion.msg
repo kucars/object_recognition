@@ -1,0 +1,18 @@
+float32 cluster_distance
+float32 clustering_voxel_size
+float32 flatten_table
+float32 inlier_threshold
+float32 min_cluster_size
+float32 plane_detection_voxel_size
+string processing_frame
+float32 table_padding
+float32 table_z_filter_max
+float32 table_z_filter_min
+int8 up_direction
+float32 x_filter_max
+float32 x_filter_min
+float32 y_filter_max
+float32 y_filter_min
+float32 z_filter_max
+float32 z_filter_min
+

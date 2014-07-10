@@ -1,0 +1,24 @@
+<launch>
+	<!-- segmentation service -->
+	<!--<arg name="tabletop_segmentation_service_name" default="/extract_objects_table" />-->
+
+	<!-- topic where the hypotheses go -->
+	<arg name="bottomup_detector_hypotheses_out" default="object_detector" />
+
+	<!-- topic where the markers go -->
+	<arg name="detector_markers_out" default="detector_markers" />
+
+	<node pkg="objectrecognition" name="object_recognition_pose_estimation_server" type="object_recognition_pose_estimation_server" respawn="true" output="screen" >
+		<!--database parameters -->
+		<rosparam command="load" file="$(find objectrecognition)/config/db.yaml"/>
+		<rosparam command="load" file="$(find objectrecognition)/config/parameters.yaml"/>
+		<param name="models_database_path" value="$(find objectrecognition)/global_model_descriptors/"/>
+		<param name="models_specification_path" value="$(find objectrecognition)/config/"/>
+
+		<remap from="bottomup_detector_hypotheses_out" to="$(arg bottomup_detector_hypotheses_out)" />
+		<remap from="detector_markers_out" to="$(arg detector_markers_out)" />
+		<!--<remap from="tabletop_segmentation" to="$(arg tabletop_segmentation_service_name)" />-->
+	</node> 
+</launch>
+
+

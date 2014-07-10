@@ -1,0 +1,133 @@
+<object_library>
+	<!--<object>
+		<id>9298</id> --><!-- mug -->
+	<!--	<symmetric>0</symmetric>
+		<graspable_point index="1177"></graspable_point>
+		<graspable_point index="1217"></graspable_point>
+		<graspable_point index="1218"></graspable_point>
+		<graspable_point index="1219"></graspable_point>
+		<graspable_point index="1211"></graspable_point>
+		<graspable_point index="1477"></graspable_point>
+		<graspable_point index="319"></graspable_point>
+		<graspable_point index="1608"></graspable_point>
+		<graspable_point index="1257"></graspable_point>
+		<graspable_point index="1474"></graspable_point>
+		<graspable_point index="301"></graspable_point>
+		<graspable_point index="1627"></graspable_point>
+		<graspable_point index="1354"></graspable_point>
+		<graspable_point index="1610"></graspable_point>
+		<graspable_point index="395"></graspable_point>
+		<graspable_point index="1197"></graspable_point>
+		<graspable_point index="1184"></graspable_point>
+		<graspable_point index="52"></graspable_point>
+		<graspable_point index="1206"></graspable_point>
+		<graspable_point index="1511"></graspable_point>
+		<graspable_point index="53"></graspable_point>
+		<graspable_point index="1614"></graspable_point>
+	</object>-->
+	<!--<object>
+		<id>9509</id>--><!-- clinder -->
+		<!--<symmetric>1</symmetric>
+	</object>-->
+	<!--<object>
+		<id>9510</id>--> <!-- cone -->
+	<!--	<symmetric>1</symmetric>
+	</object>-->
+	<!--<object>
+		<id>9492</id> --><!-- cone -->
+	<!--	<symmetric>1</symmetric>
+	</object>-->
+	<!--<object>
+		<id>9480</id> --><!-- cone -->
+		<!--<symmetric>1</symmetric>
+	</object>-->
+	<!--<object>
+		<id>9279</id>-->  <!-- bowl dia -->
+		<!--<symmetric>0</symmetric>
+	</object>--> 
+	<!--<object>
+		<id>9354</id> --> <!-- champagne glass RARA -->
+	<!--	<symmetric>0</symmetric>
+	</object>-->
+	<!--<object>
+		<id>9321</id>--> <!-- champagne glass SVALKA -->
+	<!--	<symmetric>1</symmetric>
+	</object>-->	
+	<!--<object>
+		<id>9360</id>-->  <!-- champagne glass SKIR-->
+	<!--	<symmetric>0</symmetric>
+		<graspable_point index="635"></graspable_point>
+		<graspable_point index="625"></graspable_point>
+		<graspable_point index="641"></graspable_point>
+		<graspable_point index="643"></graspable_point>
+		<graspable_point index="811"></graspable_point>
+		<graspable_point index="752"></graspable_point>
+		<graspable_point index="747"></graspable_point>
+		<graspable_point index="745"></graspable_point>
+		<graspable_point index="887"></graspable_point>
+		<graspable_point index="1173"></graspable_point>
+		<graspable_point index="909"></graspable_point>
+		<graspable_point index="882"></graspable_point>
+		<graspable_point index="1177"></graspable_point>
+	</object> -->
+	<!--<object> 
+		<id>9301</id>-->  <!-- wine glass --> 
+		<!--<symmetric>1</symmetric>
+		<graspable_point index="1339"></graspable_point>
+		<graspable_point index="1338"></graspable_point> 
+		<graspable_point index="1128"></graspable_point>
+		<graspable_point index="1341"></graspable_point>
+		<graspable_point index="1333"></graspable_point>
+		<graspable_point index="123"></graspable_point>
+		<graspable_point index="649"></graspable_point>
+		<graspable_point index="716"></graspable_point>
+		<graspable_point index="639"></graspable_point>
+		<graspable_point index="641"></graspable_point>
+		<graspable_point index="12"></graspable_point>
+		<graspable_point index="977"></graspable_point>
+		<graspable_point index="608"></graspable_point>
+		<graspable_point index="114"></graspable_point>
+		<graspable_point index="265"></graspable_point>
+		<graspable_point index="579"></graspable_point>
+		<graspable_point index="948"></graspable_point>
+		<graspable_point index="254"></graspable_point>
+		<graspable_point index="265"></graspable_point>
+	</object>-->
+ 	<object>
+		<id>9387</id> <!-- coke can -->
+		<symmetric>0</symmetric>
+	</object>
+	<!--<object>
+		<id>9281</id> --><!-- licoeur cup -->
+		<!--<symmetric>0</symmetric>
+		<graspable_point index="4"></graspable_point>
+		<graspable_point index="5"></graspable_point>
+	</object>-->
+
+	<!--<object>
+		<id>9312</id> --><!-- cup -->
+	<!--	<symmetric>1</symmetric> 
+	</object>-->
+
+<!--	<object>
+		<id>9344</id>--> <!-- Expresso cup -->
+<!--		<symmetric>0</symmetric>
+	</object> -->
+
+<!--	<object> 
+		<id>9462</id>--> <!-- bunny -->
+<!--		<symmetric>0</symmetric>
+	</object> -->
+
+<!--	<object>
+		<id>9636</id>--> <!-- ladle -->
+<!--		<symmetric>0</symmetric>
+	</object> -->
+
+<!--	<object>
+		<id>9463</id>--> <!-- ladle local -->
+<!--		<symmetric>0</symmetric>
+	</object>
+-->
+</object_library>
+

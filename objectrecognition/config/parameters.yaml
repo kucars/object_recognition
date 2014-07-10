@@ -1,0 +1,13 @@
+reference_points_percentage: 0.1
+angle_bins: 30
+distance_bins: 15
+pose_angle_bins: 30
+accumulator_peak_threshold: 0.9
+radius: 0.01
+neighbours: 10
+radius_search: false
+filter_on: false
+hypotheses_per_model: 20
+processing_frame: /camera_link
+models_database_file: ikea.test
+models_specification_file: models.xml

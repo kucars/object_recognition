@@ -1,0 +1,15 @@
+# Detection region (GOAL)
+TableRegion table_region
+---
+# List of objects (RESULTS)
+ist_msgs/ObjectList object_list
+
+# Table
+tabletop_object_segmentation_online/Table table
+---
+# The internal state that the detect objects action currently is in (FEEDBACK)
+string state
+
+# Time to completion - this is a combination of requested planning time and trajectory completion time (FEEDBACK)
+#duration time_to_completion
+float64 progress

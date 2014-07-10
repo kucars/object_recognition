@@ -1,0 +1,28 @@
+object_type_threshold: 0.05
+object_parts_threshold: 0.03
+
+downsampling_step: 0.003
+
+normals_neighbours: 4
+
+circle_minimum_radius: 0.02
+circle_maximum_radius: 0.3
+inliers_circle_threshold: 0.4
+circle_ransac_distance_threshold: 0.004
+hull_alpha: 0.01
+handle_distance_threshold: 0.009
+minimum_handle_points_percentage: 0.02
+
+
+
+centroid_distance_threshold: 0.015
+
+top_height_threshold: 0.1
+
+vertical_height_threshold: 0.025
+
+remove_outliers: false
+
+processing_frame: /table
+world_frame_id: /base_link
+camera_frame_id: /openni_rgb_optical_frame

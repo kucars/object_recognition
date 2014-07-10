@@ -1,0 +1,19 @@
+# Refined cluster
+sensor_msgs/PointCloud2 point_cloud
+
+# Refined cluster object details
+sensor_msgs/PointCloud2 point_cloud_object_details
+
+#uc3m_msgs/Table table
+tabletop_object_segmentation_online/Table table
+
+#object name (only for testing purposes)
+std_msgs/String object_name
+---
+# Object details
+ist_msgs/Object object
+#ist_object_details_msgs/Object object
+
+
+
+

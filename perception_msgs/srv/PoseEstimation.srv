@@ -1,0 +1,4 @@
+tabletop_object_segmentation_online/Table table
+sensor_msgs/PointCloud[] cluster_list
+---
+manipulation_msgs/GraspableObjectList object_list

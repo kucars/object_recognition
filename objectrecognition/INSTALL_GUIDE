@@ -1,0 +1,3 @@
+sudo apt-get install ros-electric-perception-addons
+sudo apt-get install ros-electric-object-recognition
+sudo apt-get install ros-electric-tabletop-object-perception 

@@ -1,0 +1,15 @@
+int32 obj_id
+int32 db_id
+int32 cont
+uint64 p
+float32 x
+float32 y
+float32 z
+float32 yaw
+float32 pit
+float32 rol
+float32 likelihood
+float32 likelihood_gfd
+float32 match
+geometry_msgs/PoseStamped pose
+sensor_msgs/PointCloud2 graspable_points

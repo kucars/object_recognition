@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <name>ist_object_detection</name>
+  <version>0.0.0</version>
+  <description>The ist_object_detection package</description>
+
+  <maintainer email="rui@todo.todo">rui</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>perception_msgs</build_depend>
+
+  <run_depend>perception_msgs</run_depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+
+  </export>
+</package>

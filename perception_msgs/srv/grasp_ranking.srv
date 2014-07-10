@@ -1,0 +1,6 @@
+#simple_object_recognition_msgs/SimpleObject[] simple_object
+int8 task_grasp
+---
+int8[] init_grasp
+std_msgs/UInt8MultiArray sequence
+float32[] value

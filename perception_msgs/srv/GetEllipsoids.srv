@@ -1,0 +1,10 @@
+# The raw clusters detected in the scan
+sensor_msgs/PointCloud[] clusters
+
+# The information for the plane that has been detected
+#uc3m_msgs/Table table
+
+---
+
+# Ellipsoid
+ist_msgs/Object[] ellipsoids

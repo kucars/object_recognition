@@ -1,0 +1,21 @@
+<launch>
+  <!-- Kinect -->
+  <!--<include file="$(find openni_launch)/launch/openni.launch"/>-->
+
+  <!-- Tabletop segmentation -->
+  <include file="$(find tabletop_object_segmentation_online)/launch/tabletop_segmentation_online_param_up_gazebo.launch"/>
+
+  <!-- Object recognition and pose_estimation_server -->
+  <include file="$(find objectrecognition)/launch/object_recognition_pose_estimation_server.launch"/>
+
+  <!-- Detect objects action server -->
+  <node pkg="perception" name="detect_objects_server" type="detect_objects_server.py" respawn="true" output="screen"/>
+
+  <!-- Object details -->
+  <include file="$(find ist_object_details)/launch/ist_object_details.launch"/>
+
+  <!-- Detect objects action client -->
+  <!--<node pkg="perception" name="detect_objects_client" type="detect_objects_client.py" respawn="true" output="screen"/>-->
+
+</launch>
+

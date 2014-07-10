@@ -1,0 +1,6 @@
+<launch>
+	<node pkg="ist_object_details" name="ist_object_details" type="ros_object_details" respawn="true">
+		<rosparam command="load" file="$(find ist_object_details)/config/parameters.yaml"/> 
+	</node> 
+</launch>
+

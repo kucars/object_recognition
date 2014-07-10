@@ -1,0 +1,71 @@
+<package>
+  <name>objectrecognition</name>
+  <version>0.0.0</version>
+  <description>
+
+     3d object recognition
+
+  </description>
+  <author>Rui M. H. Pimentel de Figueiredo</author>
+  <maintainer email="ruifigueiredo@isr.ist.utl.pt">Rui M. H. Pimentel de Figueiredo</maintainer>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/tese</url>
+  <buildtool_depend>catkin</buildtool_depend>
+  <!--<build_depend>libpcl-all-dev</build_depend>-->
+  <build_depend>roscpp</build_depend>
+  <!--<build_depend>pcl</build_depend>-->
+  <!--<build_depend>libpcl-all-dev</build_depend>
+  <build_depend>pcl_ros</build_depend>-->
+  <!--<build_depend>pcl</build_depend>-->
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>pcl_conversions</build_depend>
+  <build_depend>eigen_conversions</build_depend>
+  <build_depend>household_objects_database</build_depend>
+  <build_depend>household_objects_database_msgs</build_depend>
+  <build_depend>bottomup_msgs</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+  <build_depend>tabletop_object_segmentation_online</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>common_rosdeps</build_depend>
+  <build_depend>opencv2</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>image_transport</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>bottomup_msgs</build_depend>
+  <build_depend>rosconsole</build_depend>
+  <build_depend>perception_msgs</build_depend>
+  <build_depend>moveit_ros_planning</build_depend>
+  <build_depend>moveit_ros_planning_interface</build_depend>
+  <build_depend>moveit_ros_move_group</build_depend>
+  <build_depend>moveit_ros</build_depend>
+  <build_depend>shape_msgs</build_depend>
+  <!--<run_depend>libpcl-all</run_depend>
+  <run_depend>pcl_ros</run_depend>-->
+  <run_depend>pcl_ros</run_depend>
+  <run_depend>pcl_conversions</run_depend>
+  <run_depend>pcl_msgs</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>rosbag</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>bottomup_msgs</run_depend>
+  <run_depend>tabletop_object_segmentation_online</run_depend>
+  <run_depend>rosconsole</run_depend>
+  <run_depend>perception_msgs</run_depend>
+  <run_depend>moveit_ros_planning_interface</run_depend>
+  <run_depend>moveit_ros_planning</run_depend>
+  <run_depend>moveit_ros_move_group</run_depend>
+  <run_depend>moveit_ros</run_depend>
+  <run_depend>moveit_msgs</run_depend>
+  <run_depend>shape_msgs</run_depend>
+
+  <!-- <depend package="orca_proxy"/>-->
+  <export>
+	<!--<cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -L${prefix}/lib -Wl,-rpath,${prefix}/lib -lobjectrecognition_sv -lobjectrecognition_si"/>-->
+	  <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -L${prefix}/lib -Wl,-rpath,${prefix}/lib -lobjectrecognition_sv"/>
+  </export>
+</package>
+
+
