@@ -14,8 +14,6 @@
   <!-- Object details -->
   <include file="$(find ist_object_details)/launch/ist_object_details.launch"/>
 
-  <!-- Detect objects action client -->
-  <!--<node pkg="perception" name="detect_objects_client" type="detect_objects_client.py" respawn="true" output="screen"/>-->
 
 </launch>
 
