@@ -1,0 +1,17 @@
+
+<!-- perception launcher for mico arm and gazebo -->
+<launch>
+  <!-- Kinect -->
+  <!--<include file="$(find openni_launch)/launch/openni.launch"/>-->
+
+  <!-- Tabletop segmentation -->
+  <include file="$(find tabletop_object_segmentation_online)/launch/table_top_mico_on_table_gazebo.launch"/>
+
+  <!-- Detect objects action server -->
+  <node pkg="perception" name="detect_objects_server" type="detect_objects_server_mico_arm.py" respawn="true" output="screen"/>
+
+  <!-- Object details -->
+  <include file="$(find ist_object_details)/launch/ist_object_details_mico_gazebo.launch"/>
+
+</launch>
+

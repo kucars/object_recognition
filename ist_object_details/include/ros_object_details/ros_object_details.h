@@ -99,6 +99,9 @@ class RosObjectDetails
 		// Object parent frame name
 		std::string object_parent_frame_id;
 
+		// Camera frame name
+		std::string camera_frame_id;
+
 		// Table parent frame name
 		std::string world_frame_id;
 

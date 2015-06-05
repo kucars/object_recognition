@@ -21,8 +21,8 @@ top_height_threshold: 0.05
 
 vertical_height_threshold: 0.025
 
-remove_outliers: true
+remove_outliers: false
 
 processing_frame: /table
-world_frame_id: /base_link
-camera_frame_id: /openni_rgb_optical_frame#/openni_rgb_frame
+world_frame_id: /mico_link_base
+camera_frame_id: /camera_frame

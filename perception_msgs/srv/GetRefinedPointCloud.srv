@@ -7,7 +7,7 @@ tabletop_object_segmentation_online/Table table
 std_msgs/String object_name
 ---
 # Refined cluster
-sensor_msgs/PointCloud point_cloud
+sensor_msgs/PointCloud2 point_cloud
 
 # Refined cluster object details
-sensor_msgs/PointCloud point_cloud_object_details
+sensor_msgs/PointCloud2 point_cloud_object_details
