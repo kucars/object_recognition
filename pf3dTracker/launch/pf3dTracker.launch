@@ -1,0 +1,8 @@
+<launch>
+	<node pkg="pf3dTracker" name="pf3dTracker" type="pf3dTracker"  output="screen">
+		<!-- load the parameters -->
+		<rosparam command="load" file="$(find pf3dTracker)/config/parameters.yaml"/>
+	</node> 
+</launch>
+
+

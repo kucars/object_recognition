@@ -1,0 +1,98 @@
+#############
+#module name#
+#############
+#name                        /pf3dTracker
+
+#############################
+#parameters of the algorithm#
+#############################
+nParticles:                 900
+#nParticles                 number of particles used
+accelStDev:                 30
+#accelStDev                 50 30 15
+#accelStDev                 standard deviation of the acceleration noise
+insideOutsideDiffWeight:    1.5
+#insideOutsideDiffWeight    inside-outside difference weight for the likelihood function
+colorTransfPolicy:          1
+#colorTransfPolicy          [0=transform the whole image | 1=only transform the pixels you need]
+likelihoodThreshold:         0.001
+
+#########################
+#port names and function#
+#########################
+inputVideoPort:              /camera/rgb/image_color
+#inputVideoPort:             receives images from the grabber or the rectifying program.
+outputVideoPort:             /pf3dTracker/video_o
+#outputVideoPort:            produces images in which the contour of the estimated ball is highlighted
+outputDataPort:              /pf3dTracker/data_o
+#outputDataPort              produces a stream of data in the format: X, Y, Z, likelihood, U, V, seeing_object
+#outputParticlePort          /pf3dTracker/particles_o
+#outputParticlePort          produces data for the plotter. it is usually not active for performance reasons.
+#inputParticlePort           /pf3dTracker/particles_i   
+#inputParticlePort           recives hypotheses on the ball position from pf3dBottomup.
+#outputAttentionPort         /pf3dTracker/attention_o
+#outputAttentionPort         produces data for the attention system, in terms of a peak of saliency.
+
+
+#################################
+#projection model and parameters#
+#################################
+
+#iCub01 2008-07-29-afternoon.
+# perspectiveFx               221.731
+# perspectiveFy               221.396
+# perspectiveCx               152.533
+# perspectiveCy               114.882
+
+#iCubLisboaLeftEye_2009_03_04
+#perspectiveFx 		217.934
+#perspectiveFy		218.24
+#perspectiveCx		185.282
+#perspectiveCy		121.498perspectiveFx
+
+#iCubLisboaLeftEye_Zoom_Lens_2009_05_19
+#w: 320
+#h: 240
+#perspectiveFx: 445.202
+#perspectiveFy: 445.664
+#perspectiveCx: 188.297
+#perspectiveCy: 138.496
+
+# my webcam, with 320x240 resolution.
+w: 320
+h: 240
+perspectiveFx:               465
+perspectiveFy:               465
+perspectiveCx:               150
+perspectiveCy:               132
+
+
+
+#######################
+#tracked object models#
+#######################
+#trackedObjectType [sphere|parallelogram]
+trackedObjectType:           sphere
+#trackedObjectColorTemplate  /home/vislab/repositories/ros/object_recognition/pf3dTracker/models/blue_general_model_2009_03_03.bmp
+trackedObjectColorTemplate:  /home/vislab/repositories/ros/object_recognition/pf3dTracker/models/red_ball_paris_handle.jpg
+trackedObjectShapeTemplate:  /home/vislab/repositories/ros/object_recognition/pf3dTracker/models/initial_ball_points_smiley_31mm_20percent.csv
+
+motionModelMatrix:           /home/vislab/repositories/ros/object_recognition/pf3dTracker/models/motion_model_matrix.csv
+trackedObjectTemp:           current_histogram.csv
+
+#######################
+#initialization method#
+#######################
+#initialization method [search|3dEstimate|2dEstimate]
+initializationMethod:        3dEstimate
+initialX:                       0.30
+initialY:                       0.20
+initialZ:                       0.6
+
+
+####################
+#visualization mode#
+####################
+#circleVisualizationMode	[0=inner and outer cirlce | 1=one circle with the correct radious] default 0. only applies to the sphere.
+circleVisualizationMode: 1
+

@@ -15,3 +15,6 @@
 *.la
 *.a
 
+# Svn files
+*.svn
+
