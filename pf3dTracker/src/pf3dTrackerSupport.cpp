@@ -75,31 +75,31 @@ void rgbToYuvBin(int &R, int &G, int &B, int &YBin, int &UBin, int &VBin)
 }
 
 
-void rgbToYuvBinImage(IplImage *image,IplImage* transformedImage)
+void rgbToYuvBinImage(cv::Mat & image,cv::Mat & transformedImage)
 {
     int a1,a2,r,g,b, s,t,u;
-    for(a1=0;a1<transformedImage->width;a1++)
-        for(a2=0;a2<transformedImage->height;a2++)
+    for(a1=0;a1<transformedImage.cols;a1++)
+        for(a2=0;a2<transformedImage.rows;a2++)
     {
-        r=(((uchar*)(image->imageData + image->widthStep*a2))[a1*3+0]);
-        g=(((uchar*)(image->imageData + image->widthStep*a2))[a1*3+1]);
-        b=(((uchar*)(image->imageData + image->widthStep*a2))[a1*3+2]);
+        r=(((uchar*)(image.data + image.step*a2))[a1*3+0]);
+        g=(((uchar*)(image.data + image.step*a2))[a1*3+1]);
+        b=(((uchar*)(image.data + image.step*a2))[a1*3+2]);
         rgbToYuvBin(r,g,b, s,t,u);
-        (((uchar*)(transformedImage->imageData + transformedImage->widthStep*a2))[a1*3+0])=s;
-        (((uchar*)(transformedImage->imageData + transformedImage->widthStep*a2))[a1*3+1])=t;
-        (((uchar*)(transformedImage->imageData + transformedImage->widthStep*a2))[a1*3+2])=u;
+        (((uchar*)(transformedImage.data + transformedImage.step*a2))[a1*3+0])=s;
+        (((uchar*)(transformedImage.data + transformedImage.step*a2))[a1*3+1])=t;
+        (((uchar*)(transformedImage.data + transformedImage.step*a2))[a1*3+2])=u;
         //yuvBinsImage[a1][a2][0], yuvBinsImage[a1][a2][1], yuvBinsImage[a1][a2][2]);
     }
 }
 
-void setPixel(int u, int v, int r, int g, int b, IplImage *image)
+void setPixel(int u, int v, int r, int g, int b, cv::Mat & image)
 {
     //std::cout<<"u= "<<u<<"  v= "<<v<<std::endl;
-    if(u>-1&&u<image->width && v>-1&&v<image->height)
+    if(u>-1&&u<image.cols && v>-1&&v<image.rows)
     {
-        (((uchar*)(image->imageData + image->widthStep*v))[u*3+0])=r;
-        (((uchar*)(image->imageData + image->widthStep*v))[u*3+1])=g;
-        (((uchar*)(image->imageData + image->widthStep*v))[u*3+2])=b;
+        (((uchar*)(image.data + image.step*v))[u*3+0])=r;
+        (((uchar*)(image.data + image.step*v))[u*3+1])=g;
+        (((uchar*)(image.data + image.step*v))[u*3+2])=b;
     }
 }      
 
@@ -119,21 +119,21 @@ void fillLut(Lut *lut)
             }
 }
 
-void rgbToYuvBinImageLut(IplImage *image,IplImage *transformedImage, Lut *lut)
+void rgbToYuvBinImageLut(cv::Mat & image,cv::Mat & transformedImage, Lut *lut)
 {
     int a1,a2,r,g,b;
     int index;
 
-    for(a1=0;a1<image->width;a1++)
-        for(a2=0;a2<image->height;a2++)
+    for(a1=0;a1<image.cols;a1++)
+        for(a2=0;a2<image.rows;a2++)
     {
-        r=(((uchar*)(image->imageData + image->widthStep*a2))[a1*3+0]);
-        g=(((uchar*)(image->imageData + image->widthStep*a2))[a1*3+1]);
-        b=(((uchar*)(image->imageData + image->widthStep*a2))[a1*3+2]);
+        r=(((uchar*)(image.data + image.step*a2))[a1*3+0]);
+        g=(((uchar*)(image.data + image.step*a2))[a1*3+1]);
+        b=(((uchar*)(image.data + image.step*a2))[a1*3+2]);
         index=r*65536+g*256+b;
-        (((uchar*)(transformedImage->imageData + transformedImage->widthStep*a2))[a1*3+0])=lut[index].y;
-        (((uchar*)(transformedImage->imageData + transformedImage->widthStep*a2))[a1*3+1])=lut[index].u;
-        (((uchar*)(transformedImage->imageData + transformedImage->widthStep*a2))[a1*3+2])=lut[index].v;
+        (((uchar*)(transformedImage.data + transformedImage.step*a2))[a1*3+0])=lut[index].y;
+        (((uchar*)(transformedImage.data + transformedImage.step*a2))[a1*3+1])=lut[index].u;
+        (((uchar*)(transformedImage.data + transformedImage.step*a2))[a1*3+2])=lut[index].v;
         //rgbToYuvBin(r,g,b, yuvBinsImage[a1][a2][0], yuvBinsImage[a1][a2][1], yuvBinsImage[a1][a2][2]);
     }
 

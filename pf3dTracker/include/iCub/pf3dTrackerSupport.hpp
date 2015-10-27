@@ -18,8 +18,9 @@
 #pragma package <opencv>
 #endif
 #ifndef _EiC
-#include "cv.h"
-#include "highgui.h"
+//#include "cv.h"
+//#include "highgui.h"
+#include <opencv2/core/core.hpp>
 #endif
 
 struct Lut
@@ -33,9 +34,9 @@ int printMatrix(float *matrix, int matrixColumns, int matrixRows);
 
 void rgbToYuvBin(int &R, int &G, int &B, int &YBin, int &UBin, int &VBin);
 
-void rgbToYuvBinImage(IplImage *image,IplImage *yuvBinsImage);
+void rgbToYuvBinImage(cv::Mat &image,cv::Mat &yuvBinsImage);
 
-void rgbToYuvBinImageLut(IplImage *image,IplImage *yuvBinsImage, Lut *lut);
+void rgbToYuvBinImageLut(cv::Mat &image,cv::Mat &yuvBinsImage, Lut *lut);
 
 void setPixel(int u, int v, int r, int g, int b, IplImage *image);
 

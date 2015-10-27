@@ -1,6 +1,4 @@
-float64 meanX
-float64 meanY
-float64 meanZ
+geometry_msgs/PointStamped mean
 float64 likelihood
 bool seeingBall
 float64 meanU

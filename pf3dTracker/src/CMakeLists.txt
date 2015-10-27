@@ -8,10 +8,5 @@ file(GLOB folder_header ../include/iCub/*.hpp)
 source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
 
-add_executable(pf3dTracker ${folder_header} ${folder_source})
-
-rosbuild_add_executable(pf3dTracker ${folder_header} ${folder_source})
-#target_link_libraries(pf3dTracker ${OpenCV_LIBRARIES} ${YARP_LIBRARIES})
-
-#install(TARGETS pf3dTracker DESTINATION bin)
+add_executable(pf3dTracker  ${folder_header} ${folder_source})
 

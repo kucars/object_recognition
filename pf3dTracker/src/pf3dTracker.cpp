@@ -74,15 +74,15 @@
 
 #include <iCub/pf3dTracker.hpp>
 
-#include <highgui.h>
+//#include <highgui.h>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <time.h>
-   
+
 //m#include <gsl/gsl_math.h>
-#include <pf3dTracker/estimates.h>
+//#include <pf3dTracker/estimates.h>
 clock_t time1;
 double time2;
 double fps;
@@ -90,22 +90,22 @@ void tic(){ time1=clock(); }
 double tac(){ return (double)(clock()-time1)/(double)CLOCKS_PER_SEC;}
 
 
-void printMat(CvMat* A);
+void printMat(cv::Mat & A);
 
 
 //constructor
 PF3DTracker::PF3DTracker(ros::NodeHandle n): n_(n), it_(n), n_priv("~") 
 {
-  _staticImageTest = false;
-  
-  bool setUpDoneCorrectly = false;
-  // Read initialization variables and set the tracker up 
-	setUpDoneCorrectly = open();
-  if(!setUpDoneCorrectly)
-  {
-    cout<<"Set up of pf3dTracker failed."<<endl;
-    ros::shutdown();
-  }
+    _staticImageTest = false;
+
+    bool setUpDoneCorrectly = false;
+    // Read initialization variables and set the tracker up
+    setUpDoneCorrectly = open();
+    if(!setUpDoneCorrectly)
+    {
+        cout<<"Set up of pf3dTracker failed."<<endl;
+        ros::shutdown();
+    }
 
 }
 
@@ -140,14 +140,14 @@ bool PF3DTracker::open()
     // Read parameters from the initialization file *
     //***********************************************
     //Topics
-    n_priv.param<std::string>("inputVideoPort",  _inputVideoPortName,  "/camera/rgb/image_color"); 
+    n_priv.param<std::string>("inputVideoPort",  _inputVideoPortName,  "/camera/rgb/image_color");
     n_priv.param<std::string>("outputVideoPort", _outputVideoPortName, "/pf3dTracker/video_o");
     n_priv.param<std::string>("outputDataPort",  _outputDataPortName,  "/pf3dTracker/data_o");
     
     //Parameters for the algorithm
     n_priv.param<int>("nParticles", _nParticles, 900); //TODO set it back to 900
     n_priv.param<double>("accelStDev", _accelStDev, 30.0); //TODO set it back to 30
-    n_priv.param<double>("insideOutsideDiffWeight", _insideOutsideDifferenceWeight, 1.5); 
+    n_priv.param<double>("insideOutsideDiffWeight", _insideOutsideDifferenceWeight, 1.5);
     n_priv.param<double>("likelihoodThreshold", _likelihoodThreshold, 0.005);//.005); TODO ser it back to 0.005
 
     n_priv.param<std::string>("trackedObjectColorTemplate", trackedObjectColorTemplate, "/home/vislab/repositories/ros/object_recognition/pf3dTracker/models/red_ball_iit.bmp");
@@ -176,12 +176,12 @@ bool PF3DTracker::open()
     std::cout << "initialY: " << _initialY << std::endl;
     std::cout << "initialZ: " << _initialZ << std::endl;
     if(_staticImageTest)
-    {  
-      _nParticles=1;
-      _accelStDev=0.0001;
-      _initialX =  -45.0; //careful: these are millimeters!
-      _initialY =  -45.0; //careful: these are millimeters!
-      _initialZ =  290.0; //careful: these are millimeters!
+    {
+        _nParticles=1;
+        _accelStDev=0.0001;
+        _initialX =  -45.0; //careful: these are millimeters!
+        _initialY =  -45.0; //careful: these are millimeters!
+        _initialZ =  290.0; //careful: these are millimeters!
     }
     
     //*********************************************
@@ -222,21 +222,21 @@ bool PF3DTracker::open()
     }
 
     _model3dPointsMat=cvCreateMat(3, 2*nPixels, CV_64FC1);
-    if(_model3dPointsMat==0)
+    if(!_model3dPointsMat.data)
     {
         cout<<"PF3DTracker::open - I wasn\'t able to allocate memory for _model3dPointsMat.\n";
         fflush(stdout);
         quit =true;
     }
     _points2Mat=cvCreateMat(3, 2*nPixels, CV_64FC1);
-    if(_points2Mat==0)
+    if(!_points2Mat.data)
     {
         cout<<"PF3DTracker::open - I wasn\'t able to allocate memory for _points2Mat.\n";
         fflush(stdout);
         quit =true;
     }
     _tempMat=cvCreateMat(3, 2*nPixels, CV_64FC1);
-    if(_tempMat==0)
+    if(!_tempMat.data)
     {
         cout<<"PF3DTracker::open - I wasn\'t able to allocate memory for _tempMat.\n";
         fflush(stdout);
@@ -272,13 +272,13 @@ bool PF3DTracker::open()
     //create _visualization3dPointsMat and fill it with the average between outer and inner 3D points.
     _visualization3dPointsMat=cvCreateMat( 3, 2*nPixels, CV_64FC1 );
     //only the first half of this matrix is used. the second part can be full of rubbish (not zeros, I guess).
-    cvSet(_visualization3dPointsMat,(cvScalar(1)));
+    _visualization3dPointsMat.setTo(cv::Scalar(1));
     for(row=0;row<3;row++)
     {
         for(column=0;column<nPixels;column++)
         {
             
-            ((double*)(_visualization3dPointsMat->data.ptr + _visualization3dPointsMat->step*row))[column]=(((double*)(_model3dPointsMat->data.ptr + _model3dPointsMat->step*row))[column]+((double*)(_model3dPointsMat->data.ptr + _model3dPointsMat->step*row))[column+nPixels])/2;
+            ((double*)(_visualization3dPointsMat.data + _visualization3dPointsMat.step*row))[column]=(((double*)(_model3dPointsMat.data + _model3dPointsMat.step*row))[column]+((double*)(_model3dPointsMat.data + _model3dPointsMat.step*row))[column+nPixels])/2;
         }
     }
 
@@ -295,40 +295,40 @@ bool PF3DTracker::open()
     //allocate memory for the particles;
     _particles=cvCreateMat(7,_nParticles,CV_64FC1);
     //fill the memory with zeros, so that valgrind won't complain.
-    cvSetZero(_particles);
+    _particles.setTo(cv::Scalar(0));
 
     //define ways of accessing the particles:
     _particles1 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles1, 1, _nParticles, CV_64FC1, _particles->data.ptr, _particles->step );
+    cvInitMatHeader( _particles1, 1, _nParticles, CV_64FC1, _particles.data, _particles.step );
     _particles2 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles2, 1, _nParticles, CV_64FC1, _particles->data.ptr + _particles->step*1, _particles->step );
+    cvInitMatHeader( _particles2, 1, _nParticles, CV_64FC1, _particles.data + _particles.step*1, _particles.step );
     _particles3 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles3, 1, _nParticles, CV_64FC1, _particles->data.ptr + _particles->step*2, _particles->step );
+    cvInitMatHeader( _particles3, 1, _nParticles, CV_64FC1, _particles.data + _particles.step*2, _particles.step );
     _particles4 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles4, 1, _nParticles, CV_64FC1, _particles->data.ptr + _particles->step*3, _particles->step );
+    cvInitMatHeader( _particles4, 1, _nParticles, CV_64FC1, _particles.data + _particles.step*3, _particles.step );
     _particles5 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles5, 1, _nParticles, CV_64FC1, _particles->data.ptr + _particles->step*4, _particles->step );
+    cvInitMatHeader( _particles5, 1, _nParticles, CV_64FC1, _particles.data + _particles.step*4, _particles.step );
     _particles6 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles6, 1, _nParticles, CV_64FC1, _particles->data.ptr + _particles->step*5, _particles->step );
+    cvInitMatHeader( _particles6, 1, _nParticles, CV_64FC1, _particles.data + _particles.step*5, _particles.step );
     _particles7 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles7, 1, _nParticles, CV_64FC1, _particles->data.ptr + _particles->step*6, _particles->step );
+    cvInitMatHeader( _particles7, 1, _nParticles, CV_64FC1, _particles.data + _particles.step*6, _particles.step );
     _particles1to6 = cvCreateMatHeader( 6,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles1to6, 6, _nParticles, CV_64FC1, _particles->data.ptr, _particles->step );
+    cvInitMatHeader( _particles1to6, 6, _nParticles, CV_64FC1, _particles.data, _particles.step );
 
 
     //allocate memory for the "new" particles;
     _newParticles=cvCreateMat(7,_nParticles,CV_64FC1);
     _newParticles1to6 = cvCreateMatHeader( 6,_nParticles, CV_64FC1);
-    cvInitMatHeader( _newParticles1to6, 6, _nParticles, CV_64FC1, _newParticles->data.ptr, _newParticles->step );
+    cvInitMatHeader( _newParticles1to6, 6, _nParticles, CV_64FC1, _newParticles.data, _newParticles.step );
 
     //allocate memory for "noise"
     _noise=cvCreateMat(6,_nParticles,CV_64FC1);
     cvSetZero(_noise);
     _noise1 = cvCreateMatHeader( 3,_nParticles, CV_64FC1);
-    cvInitMatHeader( _noise1, 3, _nParticles, CV_64FC1, _noise->data.ptr, _noise->step );
+    cvInitMatHeader( _noise1, 3, _nParticles, CV_64FC1, _noise.data, _noise.step );
     cvSetZero(_noise1);
     _noise2 = cvCreateMatHeader( 3,_nParticles, CV_64FC1);
-    cvInitMatHeader( _noise2, 3, _nParticles, CV_64FC1, _noise->data.ptr + _noise->step*3, _noise->step );
+    cvInitMatHeader( _noise2, 3, _nParticles, CV_64FC1, _noise.data + _noise.step*3, _noise.step );
     cvSetZero(_noise2);
 
     //resampling-related stuff.
@@ -342,7 +342,7 @@ bool PF3DTracker::open()
     int count;
     for(count=0;count<_nParticles;count++)
     {
-        ((double*)(_ramp->data.ptr))[count]=(double)count+1.0F;
+        ((double*)(_ramp.data))[count]=(double)count+1.0F;
     }
 
 
@@ -354,7 +354,7 @@ bool PF3DTracker::open()
         //*************************************************************************
         //generate a set of random particles near the estimated initial 3D position
         //*************************************************************************
-                    
+
         double mean,velocityStDev;
         velocityStDev=0; //warning ??? !!! I'm setting parameters for the dynamic model here.
 
@@ -386,18 +386,18 @@ bool PF3DTracker::open()
     _uv = cvCreateMat(2,2*nPixels, CV_64FC1);
 
     _tempMat1 = cvCreateMatHeader( 1,2*nPixels, CV_64FC1);
-    cvInitMatHeader( _tempMat1, 1, 2*nPixels, CV_64FC1,_tempMat->data.ptr, _tempMat->step ); 
+    cvInitMatHeader( _tempMat1, 1, 2*nPixels, CV_64FC1,_tempMat.data, _tempMat.step );
 
     _tempMat2 = cvCreateMatHeader( 1,2*nPixels, CV_64FC1);
-    cvInitMatHeader( _tempMat2, 1, 2*nPixels, CV_64FC1, _tempMat->data.ptr+_tempMat->step*1, _tempMat->step ); //FUNZIONA? ??? !!!
+    cvInitMatHeader( _tempMat2, 1, 2*nPixels, CV_64FC1, _tempMat.data+_tempMat.step*1, _tempMat.step ); //FUNZIONA? ??? !!!
 
     _tempMat3 = cvCreateMatHeader( 1,2*nPixels, CV_64FC1);
-    cvInitMatHeader( _tempMat3, 1, 2*nPixels, CV_64FC1, _tempMat->data.ptr+_tempMat->step*2, _tempMat->step ); //FUNZIONA? ??? !!!
+    cvInitMatHeader( _tempMat3, 1, 2*nPixels, CV_64FC1, _tempMat.data+_tempMat.step*2, _tempMat.step ); //FUNZIONA? ??? !!!
 
     _p2Mat1 = cvCreateMatHeader( 1,2*nPixels, CV_64FC1);
-    cvInitMatHeader( _p2Mat1, 1, 2*nPixels, CV_64FC1, _points2Mat->data.ptr ); //FUNZIONA? ??? !!!
+    cvInitMatHeader( _p2Mat1, 1, 2*nPixels, CV_64FC1, _points2Mat.data ); //FUNZIONA? ??? !!!
     _p2Mat3 = cvCreateMatHeader( 1,2*nPixels, CV_64FC1);
-    cvInitMatHeader( _p2Mat3, 1, 2*nPixels, CV_64FC1, _points2Mat->data.ptr+_points2Mat->step*2, _points2Mat->step ); //FUNZIONA? ??? !!!
+    cvInitMatHeader( _p2Mat3, 1, 2*nPixels, CV_64FC1, _points2Mat.data+_points2Mat.step*2, _points2Mat.step ); //FUNZIONA? ??? !!!
 
     _drawingMat=cvCreateMat(3, 2*nPixels, CV_64FC1);
     _projectionMat=cvCreateMat(2, 3, CV_64FC1);
@@ -415,32 +415,32 @@ bool PF3DTracker::open()
 
     // Set the output ports
     _outputVideoPort = it_.advertise(_outputVideoPortName.c_str(), 1);
-    _outputDataPort  = n_.advertise<pf3dTracker::estimates>(_outputDataPortName.c_str(), 1);
+    _outputDataPort  = n_.advertise<pf3d_tracker::Estimates>(_outputDataPortName, 1);
     
     // Set the input video port, with the associated callback method
     _inputVideoPort = it_.subscribe(_inputVideoPortName.c_str(), 1, &PF3DTracker::processImageCallback, this);
-   if(quit==true)
-   {
+    if(quit==true)
+    {
         printf("There were problems initializing the object: the execution was interrupted.\n");
         fflush(stdout);
         return false; //there were problems initializing the objet: stop the execution.
-   }
-   else
-   {
-      //Write the header for the output data
-      cout<<"  frame#";
-      cout<<"   meanX";
-      cout<<"   meanY";
-      cout<<"   meanZ";
-      cout<<"   Likelihood";
-      cout<<"   Seing";
-      cout<<"   meanU";
-      cout<<"   meanV";
-      cout<<"   fps"<<endl;
+    }
+    else
+    {
+        //Write the header for the output data
+        cout<<"  frame#";
+        cout<<"   meanX";
+        cout<<"   meanY";
+        cout<<"   meanZ";
+        cout<<"   Likelihood";
+        cout<<"   Seing";
+        cout<<"   meanU";
+        cout<<"   meanV";
+        cout<<"   fps"<<endl;
 
         _doneInitializing=true;
         return true;  //the object was set up successfully.
-   }
+    }
 
     
 
@@ -456,394 +456,384 @@ bool PF3DTracker::open()
 //**************************
 void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 {
-        tic();
-        int count;
-        unsigned int seed;
-        double likelihood, mean, maxX, maxY, maxZ;
-        double weightedMeanX, weightedMeanY, weightedMeanZ;
-        double meanU;
-        double meanV;
-        double wholeCycle;
-        string outputFileName;
-        stringstream out;
-        IplImage *rawImageBGR;
-        
-        seed=rand();    
+    tic();
+    int count;
+    unsigned int seed;
+    double likelihood, mean, maxX, maxY, maxZ;
+    double weightedMeanX, weightedMeanY, weightedMeanZ;
+    double meanU;
+    double meanV;
+    double wholeCycle;
+    string outputFileName;
+    stringstream out;
+    IplImage *rawImageBGR;
+
+    seed=rand();
     
-        if(_staticImageTest)
+    if(_staticImageTest)
+    {
+        if( (rawImageBGR = cvLoadImage( "testImage.png", 1)) == 0 ) //load the image from file.
         {
-          if( (rawImageBGR = cvLoadImage( "testImage.png", 1)) == 0 ) //load the image from file.
-          {
-          std::cout << "Tried to open testImage.png"<<std::endl;
-              cout<<"I wasn't able to open the test image file!\n";
-              fflush(stdout);
-              return; //if I can't do it, I just quit the program.
-          }
-
-          //_rawImage = cvCreateImage(cvSize(rawImageBGR->width, rawImageBGR->height), rawImageBGR->depth, rawImageBGR->nChannels);
-          //cvCvtColor(rawImageBGR,_rawImage,CV_BGR2RGB);
-          _rawImage=rawImageBGR;
+            std::cout << "Tried to open testImage.png"<<std::endl;
+            cout<<"I wasn't able to open the test image file!\n";
+            fflush(stdout);
+            return; //if I can't do it, I just quit the program.
         }
-        else
-        {  
-          //Read the image from the buffer
-          try
-          {
-            _rosImage=cv_bridge::toCvShare(msg_ptr, sensor_msgs::image_encodings::RGB8);
-          }
-          catch (sensor_msgs::CvBridgeException error)
-          {
-            ROS_ERROR("Error reading image");
-          }
 
-          std::string aux = "bgr8";
-          _rawImage = bridge_.imgMsgToCv(msg_ptr,aux); //This is an RGB image
+        //_rawImage = cvCreateImage(cvSize(rawImageBGR.cols, rawImageBGR.rows), rawImageBGR->depth, rawImageBGR->nChannels);
+        //cvCvtColor(rawImageBGR,_rawImage,CV_BGR2RGB);
+        _rawImage=rawImageBGR;
+    }
+    else
+    {
+        //Read the image from the buffer
+        try
+        {
+            std::string aux = "bgr8";
+
+            _rawImage=cv_bridge::toCvShare(msg_ptr, aux)->image;
         }
-     
-                
-        
-//         //TEST write the bytes of this image to a file, so that we see what the encoding is.
-//         int z1,z2;
-//         ofstream myfile;
-//         myfile.open ("channel0.txt");
-//         for(z1=0;z1<_rawImage->height;z1++)
-//         {
-//           for(z2=0;z2<_rawImage->width;z2++)
-//           {
-//              myfile << (int)(((uchar*)(_rawImage->imageData + _rawImage->widthStep*z1))[z2*3+0])<< ", ";
-//           }          
-//              myfile << endl;
-//         }
-//         myfile.close();
-//         myfile.open ("channel1.txt");
-//         for(z1=0;z1<_rawImage->height;z1++)
-//         {
-//           for(z2=0;z2<_rawImage->width;z2++)
-//           {
-//              myfile << (int)(((uchar*)(_rawImage->imageData + _rawImage->widthStep*z1))[z2*3+1])<< ", ";
-//           }          
-//              myfile << endl;
-//         }
-//         myfile.close();
-//         myfile.open ("channel2.txt");
-//         for(z1=0;z1<_rawImage->height;z1++)
-//         {
-//           for(z2=0;z2<_rawImage->width;z2++)
-//           {
-//              myfile << (int)(((uchar*)(_rawImage->imageData + _rawImage->widthStep*z1))[z2*3+2])<< ", ";
-//           }          
-//              myfile << endl;
-//         }
-//         myfile.close();
+        catch (cv_bridge::Exception& e)
+        {
+            ROS_ERROR("cv_bridge exception: %s", e.what());
+            return;
+        }
 
-        
-        
-        
+        //_rawImage = bridge_.imgMsgToCv(msg_ptr,aux); //This is an RGB image
+    }
+
+
+
+    //         //TEST write the bytes of this image to a file, so that we see what the encoding is.
+    //         int z1,z2;
+    //         ofstream myfile;
+    //         myfile.open ("channel0.txt");
+    //         for(z1=0;z1<_rawImage.rows;z1++)
+    //         {
+    //           for(z2=0;z2<_rawImage.cols;z2++)
+    //           {
+    //              myfile << (int)(((uchar*)(_rawImage.data + _rawImage.step*z1))[z2*3+0])<< ", ";
+    //           }
+    //              myfile << endl;
+    //         }
+    //         myfile.close();
+    //         myfile.open ("channel1.txt");
+    //         for(z1=0;z1<_rawImage.rows;z1++)
+    //         {
+    //           for(z2=0;z2<_rawImage.cols;z2++)
+    //           {
+    //              myfile << (int)(((uchar*)(_rawImage.data + _rawImage.step*z1))[z2*3+1])<< ", ";
+    //           }
+    //              myfile << endl;
+    //         }
+    //         myfile.close();
+    //         myfile.open ("channel2.txt");
+    //         for(z1=0;z1<_rawImage.rows;z1++)
+    //         {
+    //           for(z2=0;z2<_rawImage.cols;z2++)
+    //           {
+    //              myfile << (int)(((uchar*)(_rawImage.data + _rawImage.step*z1))[z2*3+2])<< ", ";
+    //           }
+    //              myfile << endl;
+    //         }
+    //         myfile.close();
+
+
+
+
+    //*****************************************
+    //calculate the likelihood of each particle
+    //*****************************************
+    double sumLikelihood=0.0;
+    double maxLikelihood=0.0;
+    int   maxIndex=-1;
+    for(count=0;count< _nParticles;count++)
+    {
+        evaluateHypothesisPerspectiveFromRgbImage(_model3dPointsMat,(double)cvmGet(_particles,0,count),(double)cvmGet(_particles,1,count),(double)cvmGet(_particles,2,count),_modelHistogramMat,_rawImage,_perspectiveFx,_perspectiveFy, _perspectiveCx,_perspectiveCy,_insideOutsideDifferenceWeight,likelihood);
+
+        cvmSet(_particles,6,count,likelihood);
+        sumLikelihood+=likelihood;
+        if(likelihood>maxLikelihood)
+        {
+            maxLikelihood=likelihood;
+            maxIndex=count;
+        }
+    }
+    
+    
+    if(maxIndex!=-1)
+    {
+        maxX=(double)cvmGet(_particles,0,maxIndex);
+        maxY=(double)cvmGet(_particles,1,maxIndex);
+        maxZ=(double)cvmGet(_particles,2,maxIndex);
+    }
+    else
+    {
+        maxX=1;
+        maxY=1;
+        maxZ=1000;
+    }
+    
+    if(_staticImageTest)
+    {
+        cout<<"maxLikelihood = "<<maxLikelihood<<endl;
+        cout<<"likelihood for comparison = "<<maxLikelihood/exp((double)20.0)<<endl;
+    }
+    if(maxLikelihood/exp((double)20.0)>_likelihoodThreshold) //normalizing likelihood
+    {
+        _seeingObject=1;
+        _framesNotTracking=0;
+        _attentionOutput=_attentionOutputMax;
+    }
+    else
+    {
+        _attentionOutput=_attentionOutput*_attentionOutputDecrease;
+        _seeingObject=0;
+        _framesNotTracking+=1;
+    }
+    
+    
+    //If the likelihood has been under the threshold for 5 frames, reinitialize the tracker.
+    //This just works for the sphere.
+    if(_framesNotTracking==5 || sumLikelihood==0.0)
+    {
+        cout<<"**********************************************************************Reset\n";
+        double mean,velocityStDev;
+        velocityStDev=0; //warning ??? !!! I'm setting parameters for the dynamic model here.
+
+        mean=(double)_initialX;
+        cvRandArr( &rngState, _particles1, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
+        //initialize Y
+        mean=(double)_initialY;
+        cvRandArr( &rngState, _particles2, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
+        //initialize Z
+        mean=(double)_initialZ;
+        cvRandArr( &rngState, _particles3, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
+        //initialize VX
+        mean=0;
+        cvRandArr( &rngState, _particles4, CV_RAND_NORMAL, cvScalar(mean), cvScalar(velocityStDev));
+        //initialize VY
+        cvRandArr( &rngState, _particles5, CV_RAND_NORMAL, cvScalar(mean), cvScalar(velocityStDev));
+        //initialize VZ
+        cvRandArr( &rngState, _particles6, CV_RAND_NORMAL, cvScalar(mean), cvScalar(velocityStDev));
+
+        _framesNotTracking=0;
+
+        weightedMeanX=weightedMeanY=weightedMeanZ=0.0;    // UGO: they should be zeroed before accumulation
+        for(count=0;count<_nParticles;count++)
+        {
+            weightedMeanX+=(double)cvmGet(_particles,0,count);
+            weightedMeanY+=(double)cvmGet(_particles,1,count);
+            weightedMeanZ+=(double)cvmGet(_particles,2,count);
+        }
+        weightedMeanX/=_nParticles;
+        weightedMeanY/=_nParticles;
+        weightedMeanZ/=_nParticles;
+        //this mean is not weighted as there is no weight to use: the particles have just been generated.
+
+
         //*****************************************
-        //calculate the likelihood of each particle
+        //WRITE ESTIMATES TO THE SCREEN, FIRST PART
         //*****************************************
-        double sumLikelihood=0.0;
-        double maxLikelihood=0.0;
-        int   maxIndex=-1;
-        for(count=0;count< _nParticles;count++)
+        //these are not really estimates, but...
+        cout<<setw(8)<<_frameCounter;
+        cout<<setiosflags(ios::fixed)<<setprecision(3)<<setw(8)<<weightedMeanX/1000; //millimeters to meters
+        cout<<"  "<<setw(8)<<weightedMeanY/1000; //millimeters to meters
+        cout<<"  "<<setiosflags(ios::fixed)<<setprecision(3)<<setw(8)<<weightedMeanZ/1000; //millimeters to meters
+        cout<<"  "<<setiosflags(ios::fixed)<<setprecision(5)<<setw(8)<<maxLikelihood/exp((double)20.0); //normalizing likelihood
+        cout<<"  "<<setw(5)<<_seeingObject;
+    }
+    else
+    {
+        //*********************************************
+        //Compute the mean and normalize the likelihood
+        //*********************************************
+        weightedMeanX=0.0;
+        weightedMeanY=0.0;
+        weightedMeanZ=0.0;
+        for(count=0;count<_nParticles;count++)
         {
-            evaluateHypothesisPerspectiveFromRgbImage(_model3dPointsMat,(double)cvmGet(_particles,0,count),(double)cvmGet(_particles,1,count),(double)cvmGet(_particles,2,count),_modelHistogramMat,_rawImage,_perspectiveFx,_perspectiveFy, _perspectiveCx,_perspectiveCy,_insideOutsideDifferenceWeight,likelihood);
-    
-            cvmSet(_particles,6,count,likelihood);
-            sumLikelihood+=likelihood;
-            if(likelihood>maxLikelihood)
-            {
-                maxLikelihood=likelihood;
-                maxIndex=count;
-            }
-        }
-    
-    
-        if(maxIndex!=-1)
-        {
-            maxX=(double)cvmGet(_particles,0,maxIndex);
-            maxY=(double)cvmGet(_particles,1,maxIndex);
-            maxZ=(double)cvmGet(_particles,2,maxIndex);
-        }
-        else
-        {
-            maxX=1;
-            maxY=1;
-            maxZ=1000;
-        }
-    
-        if(_staticImageTest)
-        {  
-          cout<<"maxLikelihood = "<<maxLikelihood<<endl;
-          cout<<"likelihood for comparison = "<<maxLikelihood/exp((double)20.0)<<endl;
-        }  
-        if(maxLikelihood/exp((double)20.0)>_likelihoodThreshold) //normalizing likelihood
-        {
-          _seeingObject=1;
-          _framesNotTracking=0;
-          _attentionOutput=_attentionOutputMax;
-        }
-        else
-        {
-          _attentionOutput=_attentionOutput*_attentionOutputDecrease;    
-          _seeingObject=0;
-          _framesNotTracking+=1;
-        }
-    
-    
-        //If the likelihood has been under the threshold for 5 frames, reinitialize the tracker.
-        //This just works for the sphere.
-        if(_framesNotTracking==5 || sumLikelihood==0.0)
-        {
-            cout<<"**********************************************************************Reset\n";
-            double mean,velocityStDev;
-            velocityStDev=0; //warning ??? !!! I'm setting parameters for the dynamic model here.
-    
-            mean=(double)_initialX;
-            cvRandArr( &rngState, _particles1, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
-            //initialize Y
-            mean=(double)_initialY;
-            cvRandArr( &rngState, _particles2, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
-            //initialize Z
-            mean=(double)_initialZ;
-            cvRandArr( &rngState, _particles3, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
-            //initialize VX
-            mean=0;
-            cvRandArr( &rngState, _particles4, CV_RAND_NORMAL, cvScalar(mean), cvScalar(velocityStDev));
-            //initialize VY
-            cvRandArr( &rngState, _particles5, CV_RAND_NORMAL, cvScalar(mean), cvScalar(velocityStDev));
-            //initialize VZ
-            cvRandArr( &rngState, _particles6, CV_RAND_NORMAL, cvScalar(mean), cvScalar(velocityStDev));
-    
-              _framesNotTracking=0;
-    
-          weightedMeanX=weightedMeanY=weightedMeanZ=0.0;    // UGO: they should be zeroed before accumulation
-          for(count=0;count<_nParticles;count++)
-          {
-              weightedMeanX+=(double)cvmGet(_particles,0,count);
-              weightedMeanY+=(double)cvmGet(_particles,1,count);
-              weightedMeanZ+=(double)cvmGet(_particles,2,count);
-          }
-          weightedMeanX/=_nParticles;
-          weightedMeanY/=_nParticles;
-          weightedMeanZ/=_nParticles;
-          //this mean is not weighted as there is no weight to use: the particles have just been generated.
-    
-    
-          //*****************************************
-          //WRITE ESTIMATES TO THE SCREEN, FIRST PART
-          //*****************************************
-          //these are not really estimates, but... 
-          cout<<setw(8)<<_frameCounter;
-          cout<<setiosflags(ios::fixed)<<setprecision(3)<<setw(8)<<weightedMeanX/1000; //millimeters to meters
-          cout<<"  "<<setw(8)<<weightedMeanY/1000; //millimeters to meters
-          cout<<"  "<<setiosflags(ios::fixed)<<setprecision(3)<<setw(8)<<weightedMeanZ/1000; //millimeters to meters
-          cout<<"  "<<setiosflags(ios::fixed)<<setprecision(5)<<setw(8)<<maxLikelihood/exp((double)20.0); //normalizing likelihood
-          cout<<"  "<<setw(5)<<_seeingObject;
-        }
-        else
-        {      
-          //*********************************************
-          //Compute the mean and normalize the likelihood
-          //*********************************************
-          weightedMeanX=0.0;
-          weightedMeanY=0.0;
-          weightedMeanZ=0.0;
-          for(count=0;count<_nParticles;count++)
-          {
             cvmSet(_particles,6,count,(cvmGet(_particles,6,count)/sumLikelihood));
             weightedMeanX+=(double)(cvmGet(_particles,0,count)*cvmGet(_particles,6,count));
             weightedMeanY+=(double)(cvmGet(_particles,1,count)*cvmGet(_particles,6,count));
             weightedMeanZ+=(double)(cvmGet(_particles,2,count)*cvmGet(_particles,6,count));
-          }
-    
-    
-    
-          //*****************************
-          //WRITE ESTIMATES TO THE SCREEN
-          //*****************************
-          cout<<setw(8)<<_frameCounter;
-          cout<<setiosflags(ios::fixed)<<setprecision(3)<<setw(8)<<weightedMeanX/1000; //millimeters to meters
-          cout<<"  "<<setw(8)<<weightedMeanY/1000; //millimeters to meters
-          cout<<"  "<<setiosflags(ios::fixed)<<setprecision(3)<<setw(8)<<weightedMeanZ/1000; //millimeters to meters
-          cout<<"  "<<setiosflags(ios::fixed)<<setprecision(5)<<setw(8)<<maxLikelihood/exp((double)20.0); //normalizing likelihood
-          cout<<"  "<<setw(5)<<_seeingObject;
+        }
 
 
-         //------------------------------------------------------------martim
-         /*Bottle *particleInput=_inputParticlePort.read(false);
+
+        //*****************************
+        //WRITE ESTIMATES TO THE SCREEN
+        //*****************************
+        cout<<setw(8)<<_frameCounter;
+        cout<<setiosflags(ios::fixed)<<setprecision(3)<<setw(8)<<weightedMeanX/1000; //millimeters to meters
+        cout<<"  "<<setw(8)<<weightedMeanY/1000; //millimeters to meters
+        cout<<"  "<<setiosflags(ios::fixed)<<setprecision(3)<<setw(8)<<weightedMeanZ/1000; //millimeters to meters
+        cout<<"  "<<setiosflags(ios::fixed)<<setprecision(5)<<setw(8)<<maxLikelihood/exp((double)20.0); //normalizing likelihood
+        cout<<"  "<<setw(5)<<_seeingObject;
+
+
+        //------------------------------------------------------------martim
+        /*Bottle *particleInput=_inputParticlePort.read(false);
          if(particleInput==NULL) _numParticlesReceived=0;
          else _numParticlesReceived=(particleInput->get(0)).asInt();
          if(_numParticlesReceived > _nParticles){
            _numParticlesReceived=0;
            cout<<"PROBLEM: Input particles are more than nParticles.\n";
          }*/
-         //------------------------------------------------------------end martim
-    
-          //**********************
-          //RESAMPLE THE PARTICLES
-          //**********************
-          //cout<<"T1\n";
-          //fflush(stdout);
-          int minimum_likelihood=10; //do not resample if maximum likelihood is lower than this.
-                                      //this is intended to prevent that the particles collapse on the origin when you start the tracker.
-          if(maxLikelihood>minimum_likelihood)
-          {
+        //------------------------------------------------------------end martim
+
+        //**********************
+        //RESAMPLE THE PARTICLES
+        //**********************
+        //cout<<"T1\n";
+        //fflush(stdout);
+        int minimum_likelihood=10; //do not resample if maximum likelihood is lower than this.
+        //this is intended to prevent that the particles collapse on the origin when you start the tracker.
+        if(maxLikelihood>minimum_likelihood)
+        {
             //fflush(stdout);
-    
+
             //TODO non funziona ancora, credo: nelle particelle resamplate ci sono dei not-a-number.
-              systematic_resampling(_particles1to6,_particles7,_newParticles,_cumWeight);
-    
-          }
-          else //I can't apply a resampling with all weights equal to 0!
-          {
+            systematic_resampling(_particles1to6,_particles7,_newParticles,_cumWeight);
+
+        }
+        else //I can't apply a resampling with all weights equal to 0!
+        {
             //fflush(stdout);
-    
+
             //TODO:CHECK that copying the whole thing creates no problems.
             //I think I used to copy only 6 lines to make it faster.
             //Copy(&_particles[0][0], &_newParticles[0][0], 6*_nParticles);
             cvCopy(_particles,_newParticles);
-          }
-    
-            //cout<<"after resampling\n";
-/*            cout<<"Accessing the first column of _NewParticles after the resampling: "<<((double*)(_newParticles->data.ptr +  + _newParticles->step*0))[0]<<" ";
-            cout<<((double*)(_newParticles->data.ptr + _newParticles->step*1))[0]<<" ";
-            cout<<((double*)(_newParticles->data.ptr + _newParticles->step*2))[0]<<" ";
-            cout<<((double*)(_newParticles->data.ptr + _newParticles->step*3))[0]<<" ";
-            cout<<((double*)(_newParticles->data.ptr + _newParticles->step*4))[0]<<" ";
-            cout<<((double*)(_newParticles->data.ptr + _newParticles->step*5))[0]<<" ";
-            cout<<((double*)(_newParticles->data.ptr + _newParticles->step*6))[0]<<endl;*/
-            
-            //printMat(_newParticles);
-    
-          //printMat(_A);
-    
-    
-    
-    
-    
-    
-    
-    
-    
-          //the "good" particles now are in _newParticles
-          //******************************************
-          //APPLY THE MOTION MODEL: 1.APPLY THE MATRIX
-          //******************************************
-          cvMatMul(_A,_newParticles,_particles);
-    
-          //the "good" particles now are in _particles
-          //********************************************************
-          //APPLY THE MOTION MODEL: 2.ADD THE EFFECT OF ACCELERATION
-          //********************************************************
-            mean = 0; 
-            //cout<<"Noise generation parameters: mean= "<<mean<<", accelStDev= "<<_accelStDev<<endl;
-            //cout<<"_noise1 before generation: "<<((double*)(_noise1->data.ptr + _noise->step*0))[0]<<endl;
-            cvRandArr( &rngState, _noise1, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
-            //cout<<"_noise1 after generation: "<<((double*)(_noise1->data.ptr + _noise->step*0))[0]<<endl;
-
-            cvCopy(_noise1,_noise2);
-            cvConvertScale( _noise1, _noise1, 0.5, 0 );//influence on the position is half that on speed.
-            //cout<<"_noise1 after rescaling: "<<((double*)(_noise1->data.ptr + _noise->step*0))[0]<<endl;
-
-            //cout<<"_noise2 after generation: "<<((double*)(_noise2->data.ptr + _noise->step*0))[0]<<endl;
-            
-            //cout<<"First element of _particles before addition of noise: "<<((double*)(_particles->data.ptr + _particles->step*0))[0]<<endl;
-            cvAdd(_particles1to6,_noise,_particles1to6);//sum the influence of the noise to the previous status
-            //cout<<"First element of _particles after addition of noise: "<<((double*)(_particles->data.ptr + _particles->step*0))[0]<<endl;
-    
-
-            
-            
-		//------------------------------------------------------------martim
-		// get particles from input
-		/*if(_numParticlesReceived > 0){
-			int topdownParticles = _nParticles - _numParticlesReceived;
-			for(count=0 ; count<_numParticlesReceived ; count++){
-				cvmSet(_particles,0,topdownParticles+count, (particleInput->get(1+count*3+0)).asDouble());
-				cvmSet(_particles,1,topdownParticles+count, (particleInput->get(1+count*3+1)).asDouble());
-				cvmSet(_particles,2,topdownParticles+count, (particleInput->get(1+count*3+2)).asDouble());
-				cvmSet(_particles,3,topdownParticles+count, 0);
-				cvmSet(_particles,4,topdownParticles+count, 0);
-				cvmSet(_particles,5,topdownParticles+count, 0);
-				cvmSet(_particles,6,topdownParticles+count, 0.8); //??
-			}
-			//num_bottomup_objects=(particleInput->get(1+count*3)).asInt();
-		}*/
-		//------------------------------------------------------------end martim
-	}
-    
-
-        //************************************
-        //DRAW THE SAMPLED POINTS ON THE IMAGE
-        //************************************
-        if(_seeingObject)
-        {  
-        	drawContourPerspective(_visualization3dPointsMat, weightedMeanX,weightedMeanY,weightedMeanZ, _rawImage, _perspectiveFx, _perspectiveFy, _perspectiveCx, _perspectiveCy, 0, 255, 0, meanU, meanV);
-          drawSampledLinesPerspective(_model3dPointsMat, weightedMeanX,weightedMeanY,weightedMeanZ, _rawImage,_perspectiveFx, _perspectiveFy, _perspectiveCx, _perspectiveCy, 255, 255, 255, meanU, meanV);
         }
-        else
-        {  
-        	drawContourPerspective(_visualization3dPointsMat, weightedMeanX,weightedMeanY,weightedMeanZ, _rawImage, _perspectiveFx, _perspectiveFy, _perspectiveCx, _perspectiveCy, 0,255, 255, meanU, meanV);
+
+        //cout<<"after resampling\n";
+        /*            cout<<"Accessing the first column of _NewParticles after the resampling: "<<((double*)(_newParticles.data +  + _newParticles.step*0))[0]<<" ";
+            cout<<((double*)(_newParticles.data + _newParticles.step*1))[0]<<" ";
+            cout<<((double*)(_newParticles.data + _newParticles.step*2))[0]<<" ";
+            cout<<((double*)(_newParticles.data + _newParticles.step*3))[0]<<" ";
+            cout<<((double*)(_newParticles.data + _newParticles.step*4))[0]<<" ";
+            cout<<((double*)(_newParticles.data + _newParticles.step*5))[0]<<" ";
+            cout<<((double*)(_newParticles.data + _newParticles.step*6))[0]<<endl;*/
+
+        //printMat(_newParticles);
+
+        //printMat(_A);
+
+
+
+
+
+
+
+
+
+        //the "good" particles now are in _newParticles
+        //******************************************
+        //APPLY THE MOTION MODEL: 1.APPLY THE MATRIX
+        //******************************************
+        cvMatMul(_A,_newParticles,_particles);
+
+        //the "good" particles now are in _particles
+        //********************************************************
+        //APPLY THE MOTION MODEL: 2.ADD THE EFFECT OF ACCELERATION
+        //********************************************************
+        mean = 0;
+        //cout<<"Noise generation parameters: mean= "<<mean<<", accelStDev= "<<_accelStDev<<endl;
+        //cout<<"_noise1 before generation: "<<((double*)(_noise1.data + _noise.step*0))[0]<<endl;
+        cvRandArr( &rngState, _noise1, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
+        //cout<<"_noise1 after generation: "<<((double*)(_noise1.data + _noise.step*0))[0]<<endl;
+
+        cvCopy(_noise1,_noise2);
+        cvConvertScale( _noise1, _noise1, 0.5, 0 );//influence on the position is half that on speed.
+        //cout<<"_noise1 after rescaling: "<<((double*)(_noise1.data + _noise.step*0))[0]<<endl;
+
+        //cout<<"_noise2 after generation: "<<((double*)(_noise2.data + _noise.step*0))[0]<<endl;
+
+        //cout<<"First element of _particles before addition of noise: "<<((double*)(_particles.data + _particles.step*0))[0]<<endl;
+        cvAdd(_particles1to6,_noise,_particles1to6);//sum the influence of the noise to the previous status
+        //cout<<"First element of _particles after addition of noise: "<<((double*)(_particles.data + _particles.step*0))[0]<<endl;
+
+
+
+
+        //------------------------------------------------------------martim
+        // get particles from input
+        /*if(_numParticlesReceived > 0){
+            int topdownParticles = _nParticles - _numParticlesReceived;
+            for(count=0 ; count<_numParticlesReceived ; count++){
+                cvmSet(_particles,0,topdownParticles+count, (particleInput->get(1+count*3+0)).asDouble());
+                cvmSet(_particles,1,topdownParticles+count, (particleInput->get(1+count*3+1)).asDouble());
+                cvmSet(_particles,2,topdownParticles+count, (particleInput->get(1+count*3+2)).asDouble());
+                cvmSet(_particles,3,topdownParticles+count, 0);
+                cvmSet(_particles,4,topdownParticles+count, 0);
+                cvmSet(_particles,5,topdownParticles+count, 0);
+                cvmSet(_particles,6,topdownParticles+count, 0.8); //??
+            }
+            //num_bottomup_objects=(particleInput->get(1+count*3)).asInt();
+        }*/
+        //------------------------------------------------------------end martim
+    }
+    
+
+    //************************************
+    //DRAW THE SAMPLED POINTS ON THE IMAGE
+    //************************************
+    if(_seeingObject)
+    {
+        drawContourPerspective(_visualization3dPointsMat, weightedMeanX,weightedMeanY,weightedMeanZ, _rawImage, _perspectiveFx, _perspectiveFy, _perspectiveCx, _perspectiveCy, 0, 255, 0, meanU, meanV);
+        drawSampledLinesPerspective(_model3dPointsMat, weightedMeanX,weightedMeanY,weightedMeanZ, _rawImage,_perspectiveFx, _perspectiveFy, _perspectiveCx, _perspectiveCy, 255, 255, 255, meanU, meanV);
+    }
+    else
+    {
+        drawContourPerspective(_visualization3dPointsMat, weightedMeanX,weightedMeanY,weightedMeanZ, _rawImage, _perspectiveFx, _perspectiveFy, _perspectiveCx, _perspectiveCy, 0,255, 255, meanU, meanV);
         //Red+Green=yellow
-          drawSampledLinesPerspective(_model3dPointsMat, weightedMeanX,weightedMeanY,weightedMeanZ, _rawImage,_perspectiveFx, _perspectiveFy, _perspectiveCx, _perspectiveCy, 255, 255, 255, meanU, meanV);
-        }
-          
-          
-        wholeCycle=1.0/tac();
-        cout<<setw(8)<<(int)meanU;
-        cout<<setw(5)<<(int)meanV;
-        if(_firstFrame==false)
-        {
-            cout<<setw(5)<<setw(8)<<setiosflags(ios::fixed)<<setprecision(3)<<wholeCycle<<endl;      
-        }
-        else
-        {
-            cout<<"   -----"<<endl;
-            _firstFrame=false;
-        }
+        drawSampledLinesPerspective(_model3dPointsMat, weightedMeanX,weightedMeanY,weightedMeanZ, _rawImage,_perspectiveFx, _perspectiveFy, _perspectiveCx, _perspectiveCy, 255, 255, 255, meanU, meanV);
+    }
+
+
+    wholeCycle=1.0/tac();
+    cout<<setw(8)<<(int)meanU;
+    cout<<setw(5)<<(int)meanV;
+    if(_firstFrame==false)
+    {
+        cout<<setw(5)<<setw(8)<<setiosflags(ios::fixed)<<setprecision(3)<<wholeCycle<<endl;
+    }
+    else
+    {
+        cout<<"   -----"<<endl;
+        _firstFrame=false;
+    }
     
-    	/////////////////
-	// DATA OUTPUT //
-	/////////////////
-	
-        pf3dTracker::estimates outMsg;
-        outMsg.meanX=weightedMeanX/1000;
-        outMsg.meanY=weightedMeanY/1000;
-        outMsg.meanZ=weightedMeanZ/1000;
-        outMsg.likelihood=maxLikelihood/exp((double)20.0);
-        outMsg.meanU=meanU;
-        outMsg.meanV=meanV;
-        outMsg.seeingBall=_seeingObject;
-        _outputDataPort.publish(outMsg);
+    /////////////////
+    // DATA OUTPUT //
+    /////////////////
+
+    pf3d_tracker::Estimates outMsg;
+    outMsg.mean.point.x=weightedMeanX/1000;
+    outMsg.mean.point.y=weightedMeanY/1000;
+    outMsg.mean.point.z=weightedMeanZ/1000;
+
+    outMsg.likelihood=maxLikelihood/exp((double)20.0);
+    outMsg.meanU=meanU;
+    outMsg.meanV=meanV;
+    outMsg.seeingBall=_seeingObject;
+    _outputDataPort.publish(outMsg);
 
 
-        
-        
-        sensor_msgs::Image cvimg;
-        string encoding = "passthrough";
-        sensor_msgs::CvBridge::fromIpltoRosImage(_rawImage, cvimg, sensor_msgs::image_encodings::BGR8);
-        
-        //write the elaborated image on the output port.
-        try
-        {
-          //_outputVideoPort.publish(msg_ptr);
-          _outputVideoPort.publish(cvimg);
-                    
-        }
-        catch (sensor_msgs::CvBridgeException error)
-        {
-          ROS_ERROR("Not able to publish output image");
-        }
-  
-        if(_staticImageTest)
-        {
-          cvSaveImage("testImageOutput.png", _rawImage);
-          cvReleaseImage(&rawImageBGR);
-          ros::shutdown(); //exit the program after just one cycle
-        }  
-        //cvReleaseImage(&_rawImage);
-        _frameCounter++;
+
+    sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", _rawImage).toImageMsg();
+
+    _outputVideoPort.publish(img_msg);
+
+    if(_staticImageTest)
+    {
+        cvSaveImage("testImageOutput.png", _rawImage);
+        cvReleaseImage(&rawImageBGR);
+        ros::shutdown(); //exit the program after just one cycle
+    }
+    //cvReleaseImage(&_rawImage);
+    _frameCounter++;
     
 }
 
@@ -875,13 +865,13 @@ bool PF3DTracker::close()
 
 
 
-void PF3DTracker::drawContourPerspective(CvMat* model3dPointsMat,double x, double y, double z, IplImage * image, double _perspectiveFx,double  _perspectiveFy ,double _perspectiveCx,double  _perspectiveCy ,int R, int G, int B, double &meanU, double &meanV)
+void PF3DTracker::drawContourPerspective(cv::Mat & model3dPointsMat,double x, double y, double z, IplImage * image, double _perspectiveFx,double  _perspectiveFy ,double _perspectiveCx,double  _perspectiveCy ,int R, int G, int B, double &meanU, double &meanV)
 {
 
-	//IplImage image =cv_ptr->image; 
+    //IplImage image =cv_ptr->image;
 
     bool failure;
-    //CvMat* uv=cvCreateMat(2,2*nPixels,CV_64FC1);
+    //cv::Mat & uv=cvCreateMat(2,2*nPixels,CV_64FC1);
 
     //create a copy of the 3D original points.
     cvCopy(model3dPointsMat,_drawingMat);
@@ -890,9 +880,9 @@ void PF3DTracker::drawContourPerspective(CvMat* model3dPointsMat,double x, doubl
     //****************************
     //ROTOTRANSLATE THE 3D POINTS.
     //****************************
-        failure=place3dPointsPerspective(_drawingMat,x,y,z);
-        //cout<<"rototraslated points:\n";
-        //printMatrix(&model3dPointsDuplicate[0][0],2*nPixels,3);
+    failure=place3dPointsPerspective(_drawingMat,x,y,z);
+    //cout<<"rototraslated points:\n";
+    //printMatrix(&model3dPointsDuplicate[0][0],2*nPixels,3);
 
 
 
@@ -901,19 +891,19 @@ void PF3DTracker::drawContourPerspective(CvMat* model3dPointsMat,double x, doubl
     //***********************
     //PROJECT 3D POINTS TO 2D
     //***********************
-        failure= perspective_projection(_drawingMat, _perspectiveFx, _perspectiveFy, _perspectiveCx, _perspectiveCy, _uv)!=0;
-        if(failure)
-        {
-            cout<<"I had troubles projecting the points.\n";
-        }
-        //used to be:
-        //         //(Ipp32f *xyz, int xyzColumns, int xyzRows, int xyzStride1, int xyzStride2, double fx, double fy, Ipp32f u0, Ipp32f v0, Ipp32f *uv, int uvStride1, int uvStride2
-        //         failure=perspective_projection(&model3dPointsDuplicate[0][0],2*nPixels,3,sizeof(Ipp32f)*2*nPixels,sizeof(Ipp32f),_perspectiveFx,  _perspectiveFy , _perspectiveCx,  _perspectiveCy,&uv[0][0],sizeof(Ipp32f)*2*nPixels,sizeof(Ipp32f));
-        //
-        //         if(failure)
-        //         {
-        //             cout<<"I had troubles projecting the points.\n";
-        //         }
+    failure= perspective_projection(_drawingMat, _perspectiveFx, _perspectiveFy, _perspectiveCx, _perspectiveCy, _uv)!=0;
+    if(failure)
+    {
+        cout<<"I had troubles projecting the points.\n";
+    }
+    //used to be:
+    //         //(Ipp32f *xyz, int xyzColumns, int xyzRows, int xyzStride1, int xyzStride2, double fx, double fy, Ipp32f u0, Ipp32f v0, Ipp32f *uv, int uvStride1, int uvStride2
+    //         failure=perspective_projection(&model3dPointsDuplicate[0][0],2*nPixels,3,sizeof(Ipp32f)*2*nPixels,sizeof(Ipp32f),_perspectiveFx,  _perspectiveFy , _perspectiveCx,  _perspectiveCy,&uv[0][0],sizeof(Ipp32f)*2*nPixels,sizeof(Ipp32f));
+    //
+    //         if(failure)
+    //         {
+    //             cout<<"I had troubles projecting the points.\n";
+    //         }
 
 
 
@@ -925,21 +915,21 @@ void PF3DTracker::drawContourPerspective(CvMat* model3dPointsMat,double x, doubl
     meanV=0;
     for(conta=0;conta<nPixels;conta++)
     {
-        meanV=meanV+((double*)(_uv->data.ptr + _uv->step*1))[conta];
-        meanU=meanU+((double*)(_uv->data.ptr + _uv->step*0))[conta];
+        meanV=meanV+((double*)(_uv.data + _uv.step*1))[conta];
+        meanU=meanU+((double*)(_uv.data + _uv.step*0))[conta];
 
         for(lippa=-2;lippa<3;lippa++)
             for(cippa=-2;cippa<3;cippa++)
             {
-                vPosition= (int)(((double*)(_uv->data.ptr + _uv->step*1))[conta])+lippa-1;
-                uPosition= (int)(((double*)(_uv->data.ptr + _uv->step*0))[conta])+cippa-1;
+                vPosition= (int)(((double*)(_uv.data + _uv.step*1))[conta])+lippa-1;
+                uPosition= (int)(((double*)(_uv.data + _uv.step*0))[conta])+cippa-1;
 
-                if((uPosition<_rawImage->width)&&(uPosition>=0)&&(vPosition<_rawImage->height)&&(vPosition>=0))
+                if((uPosition<_rawImage.cols)&&(uPosition>=0)&&(vPosition<_rawImage.rows)&&(vPosition>=0))
                 {
-			// NOT SURE IF WIDTHSTEP OR WIDTH
-		   	(((uchar*)(_rawImage->imageData + _rawImage->widthStep*vPosition))[uPosition*3+0])=R;
-			(((uchar*)(_rawImage->imageData + _rawImage->widthStep*vPosition))[uPosition*3+1])=G;
-			(((uchar*)(_rawImage->imageData + _rawImage->widthStep*vPosition))[uPosition*3+2])=B;
+                    // NOT SURE IF WIDTHSTEP OR WIDTH
+                    (((uchar*)(_rawImage.data + _rawImage.step*vPosition))[uPosition*3+0])=R;
+                    (((uchar*)(_rawImage.data + _rawImage.step*vPosition))[uPosition*3+1])=G;
+                    (((uchar*)(_rawImage.data + _rawImage.step*vPosition))[uPosition*3+2])=B;
                 }
 
             }
@@ -947,11 +937,11 @@ void PF3DTracker::drawContourPerspective(CvMat* model3dPointsMat,double x, doubl
 
     meanU=floor(meanU/nPixels);
     meanV=floor(meanV/nPixels);
-    if((meanU<_rawImage->width)&&(meanU>=0)&&(meanV<_rawImage->height)&&(meanV>=0))
+    if((meanU<_rawImage.cols)&&(meanU>=0)&&(meanV<_rawImage.rows)&&(meanV>=0))
     {
-	(((uchar*)(_rawImage->imageData + _rawImage->widthStep*(int)meanV))[(int)meanU*3+0])=R;
-	(((uchar*)(_rawImage->imageData + _rawImage->widthStep*(int)meanV))[(int)meanU*3+1])=G;
-	(((uchar*)(_rawImage->imageData + _rawImage->widthStep*(int)meanV))[(int)meanU*3+2])=B;
+        (((uchar*)(_rawImage.data + _rawImage.step*(int)meanV))[(int)meanU*3+0])=R;
+        (((uchar*)(_rawImage.data + _rawImage.step*(int)meanV))[(int)meanU*3+1])=G;
+        (((uchar*)(_rawImage.data + _rawImage.step*(int)meanV))[(int)meanU*3+2])=B;
     }
 
 }
@@ -980,84 +970,53 @@ bool PF3DTracker::computeTemplateHistogram(string imageFileName,string dataFileN
     }
     //set content of the matrix to zero.
     cvSetZero(histogram);//used to be: ipps Zero_32f(&histogram[0][0][0], YBins*UBins*VBins);
-    IplImage *rawImage;
-    IplImage *rawImageRGB;
-    IplImage* transformedImage;
+    cv::Mat rawImage;
+    cv::Mat rawImageRGB;
+    cv::Mat transformedImage;
     
     //load the image
-    if( (rawImage = cvLoadImage( imageFileName.c_str(), 1)) == 0 ) //load the image from file.
+    rawImage = cv::imread( imageFileName, CV_LOAD_IMAGE_COLOR); //load the image from file.
+
+    if(! rawImage.data )
     {
-		std::cout << "tried to open: " <<  imageFileName.c_str() <<std::endl;
+        std::cout << "tried to open: " <<  imageFileName.c_str() <<std::endl;
         cout<<"I wasn't able to open the image file!\n";
         fflush(stdout);
         return true; //if I can't do it, I just quit the program.
     }
 
-    rawImageRGB = cvCreateImage(cvSize(rawImage->width, rawImage->height), rawImage->depth, rawImage->nChannels); //TODO I'm not using this one right now: I could remove it.
-    cvCvtColor(rawImage,rawImageRGB,CV_BGR2RGB);
-    
-//         //TEST write the bytes of this image to a file, so that we see what the encoding is.
-//         int z1,z2;
-//         ofstream myfile;
-//         myfile.open ("Tchannel0.txt");
-//         for(z1=0;z1<rawImage->height;z1++)
-//         {
-//           for(z2=0;z2<rawImage->width;z2++)
-//           {
-//              myfile << (int)(((uchar*)(rawImage->imageData + rawImage->widthStep*z1))[z2*3+0])<< ", ";
-//           }          
-//              myfile << endl;
-//         }
-//         myfile.close();
-//         myfile.open ("Tchannel1.txt");
-//         for(z1=0;z1<rawImage->height;z1++)
-//         {
-//           for(z2=0;z2<rawImage->width;z2++)
-//           {
-//              myfile << (int)(((uchar*)(rawImage->imageData + rawImage->widthStep*z1))[z2*3+1])<< ", ";
-//           }          
-//              myfile << endl;
-//         }
-//         myfile.close();
-//         myfile.open ("Tchannel2.txt");
-//         for(z1=0;z1<rawImage->height;z1++)
-//         {
-//           for(z2=0;z2<rawImage->width;z2++)
-//           {
-//              myfile << (int)(((uchar*)(rawImage->imageData + rawImage->widthStep*z1))[z2*3+2])<< ", ";
-//           }          
-//              myfile << endl;
-//         }
-//         myfile.close();
 
+    rawImageRGB =cv::Mat(rawImage.rows, rawImage.cols,rawImage.type());
+    cv::cvtColor(rawImage,rawImageRGB,CV_BGR2RGB);
+    
     //allocate space for the transformed image
-    transformedImage = cvCreateImage(cvSize(rawImage->width,rawImage->height),IPL_DEPTH_8U,3);
+    transformedImage = cv::Mat(rawImage.rows, rawImage.cols,rawImage.type());//cvCreateImage(cvSize(rawImage.cols,rawImage.rows),IPL_DEPTH_8U,3);
 
     //transform the image in the YUV format
     rgbToYuvBinImageLut(rawImage,transformedImage,_lut);
     
     //count the frequencies of colour bins, build the histogram.
-    for(v=0;v<rawImage->height;v++)
-        for(u=0;u<rawImage->width;u++)
+    for(v=0;v<rawImage.rows;v++)
+        for(u=0;u<rawImage.cols;u++)
         {
             //discard white pixels [255,255,255].
             if(!(
-                    (((uchar*)(rawImage->imageData + rawImage->widthStep*v))[u*3+0])==255 && (((uchar*)(rawImage->imageData + rawImage->widthStep*v))[u*3+1])==255 && (((uchar*)(rawImage->imageData + rawImage->widthStep*v))[u*3+2])==255) 
+                        (((uchar*)(rawImage.data + rawImage.step*v))[u*3+0])==255 && (((uchar*)(rawImage.data + rawImage.step*v))[u*3+1])==255 && (((uchar*)(rawImage.data + rawImage.step*v))[u*3+2])==255)
 
-                )
+                    )
             {
 
 
-                a=(((uchar*)(transformedImage->imageData + transformedImage->widthStep*v))[u*3+0]);//Y bin
-                b=(((uchar*)(transformedImage->imageData + transformedImage->widthStep*v))[u*3+1]);//U bin
-                c=(((uchar*)(transformedImage->imageData + transformedImage->widthStep*v))[u*3+2]);//V bin
+                a=(((uchar*)(transformedImage.data + transformedImage.step*v))[u*3+0]);//Y bin
+                b=(((uchar*)(transformedImage.data + transformedImage.step*v))[u*3+1]);//U bin
+                c=(((uchar*)(transformedImage.data + transformedImage.step*v))[u*3+2]);//V bin
 
                 //TEST printf("histogram->size[0].step,%d\n",histogram->dim[0].step);  256
                 //TEST printf("histogram->size[1].step,%d\n",histogram->dim[1].step);   32
                 //TEST printf("histogram->size[2].step,%d\n",histogram->dim[2].step);    4
-                *((double*)(histogram->data.ptr + a*histogram->dim[0].step + b*histogram->dim[1].step + c*histogram->dim[2].step)) +=1;
+                *((double*)(histogram.data + a*histogram->dim[0].step + b*histogram->dim[1].step + c*histogram->dim[2].step)) +=1;
 
-                //initial pointer + Y*UBINS*VBINS*histogram->step + U*VBINS*histogram->step + V*histogram->step. RIGHT?
+                //initial pointer + Y*UBINS*VBINS*histogram.step + U*VBINS*histogram.step + V*histogram.step. RIGHT?
                 //histogram[(yuvBinsImage[u][v][0])*UBins*VBins + (yuvBinsImage[u][v][1])*VBins +  (yuvBinsImage[u][v][2]) ]+=1; //increment the correct bin counter.
                 usedPoints+=1;
             }
@@ -1065,11 +1024,11 @@ bool PF3DTracker::computeTemplateHistogram(string imageFileName,string dataFileN
         }
 
     //normalize
-    if(usedPoints>0)  
+    if(usedPoints>0)
     {
         //histogram=histogram/usedPoints
         cvConvertScale( histogram, histogram, 1/usedPoints, 0 );
-       //used to be: ipps DivC_32f_I(usedPoints, &histogram[0][0][0], YBins*UBins*VBins);
+        //used to be: ipps DivC_32f_I(usedPoints, &histogram[0][0][0], YBins*UBins*VBins);
     }
 
     //write the computed histogram to a file.
@@ -1087,10 +1046,10 @@ bool PF3DTracker::computeTemplateHistogram(string imageFileName,string dataFileN
             for(b=0;b<UBins;b++)
             {
                 for(c=0;c<VBins;c++)
-                 {
-                    fout<<*((double*)(histogram->data.ptr + a*histogram->dim[0].step + b*histogram->dim[1].step + c*histogram->dim[2].step))<<endl;
+                {
+                    fout<<*((double*)(histogram.data + a*histogram->dim[0].step + b*histogram->dim[1].step + c*histogram->dim[2].step))<<endl;
                     //used to be: fout<<(double)(histogram[a*UBins*VBins + b*VBins + c])<<endl;
-                 }
+                }
             }
         }
         fout.close();
@@ -1110,7 +1069,7 @@ bool PF3DTracker::readModelHistogram(CvMatND* histogram,const char fileName[])
 {
     int c1,c2,c3;
     char line[15];
-            
+
     ifstream fin(fileName);//open file
     if(!fin)                           //confirm file opened
     {
@@ -1120,26 +1079,26 @@ bool PF3DTracker::readModelHistogram(CvMatND* histogram,const char fileName[])
     }
     else
     {
-        for(c1=0;c1<YBins;c1++) 
-            for(c2=0;c2<UBins;c2++) 
-                for(c3=0;c3<VBins;c3++) 
+        for(c1=0;c1<YBins;c1++)
+            for(c2=0;c2<UBins;c2++)
+                for(c3=0;c3<VBins;c3++)
                 {
                     fin.getline(line, 14);
-                    *((double*)(histogram->data.ptr + c1*histogram->dim[0].step + c2*histogram->dim[1].step + c3*histogram->dim[2].step))=(double)atof(line);
+                    *((double*)(histogram.data + c1*histogram->dim[0].step + c2*histogram->dim[1].step + c3*histogram->dim[2].step))=(double)atof(line);
                     //TEST cout << c1 <<" "<<c2<<" "<<c3 << endl;
                     //TEST fflush(stdout);
-                }   
+                }
         return false;
     }
 }
 
 
 
-bool PF3DTracker::readInitialmodel3dPoints(CvMat* points, string fileName)
+bool PF3DTracker::readInitialmodel3dPoints(cv::Mat & points, string fileName)
 {
     int c1,c2;
     char line[15];
-            
+
     ifstream fin(fileName.c_str());//open file
     if(!fin)                           //confirm file opened
     {
@@ -1149,23 +1108,23 @@ bool PF3DTracker::readInitialmodel3dPoints(CvMat* points, string fileName)
     }
     else
     {
-        for(c1=0;c1<3;c1++) 
-            for(c2=0;c2<2*nPixels;c2++) 
-        {
-            fin.getline(line, 14);
-            ((double*)(points->data.ptr + points->step*c1))[c2]=(double)atof(line);
-        }   
+        for(c1=0;c1<3;c1++)
+            for(c2=0;c2<2*nPixels;c2++)
+            {
+                fin.getline(line, 14);
+                ((double*)(points.data + points.step*c1))[c2]=(double)atof(line);
+            }
         return false;
     }
 }
 
 
 
-bool PF3DTracker::readMotionModelMatrix(CvMat* points, string fileName)
+bool PF3DTracker::readMotionModelMatrix(cv::Mat & points, string fileName)
 {
     int c1,c2;
     char line[15];
-            
+
     ifstream fin(fileName.c_str());//open file
     if(!fin)                           //confirm file opened
     {
@@ -1177,11 +1136,11 @@ bool PF3DTracker::readMotionModelMatrix(CvMat* points, string fileName)
     {
         for(c1=0;c1<7;c1++)
             for(c2=0;c2<7;c2++)
-        {
-            fin.getline(line, 14);
-            cvmSet(points,c1,c2,atof(line));
-            
-        }   
+            {
+                fin.getline(line, 14);
+                cvmSet(points,c1,c2,atof(line));
+
+            }
         return false;
     }
 }
@@ -1191,7 +1150,7 @@ bool PF3DTracker::readMotionModelMatrix(CvMat* points, string fileName)
 
 
 
-bool PF3DTracker::evaluateHypothesisPerspectiveFromRgbImage(CvMat* model3dPointsMat,double x, double y, double z, CvMatND* modelHistogramMat, IplImage *image,  double fx, double fy, double u0, double v0, double inside_outside, double &likelihood)
+bool PF3DTracker::evaluateHypothesisPerspectiveFromRgbImage(cv::Mat & model3dPointsMat,double x, double y, double z, CvMatND* modelHistogramMat, cv::Mat & image,  double fx, double fy, double u0, double v0, double inside_outside, double &likelihood)
 {
 
     bool failure;
@@ -1230,21 +1189,21 @@ bool PF3DTracker::evaluateHypothesisPerspectiveFromRgbImage(CvMat* model3dPoints
     
     likelihood=exp(20*likelihood); //no need to divide: I'm normalizing later.
     if(_staticImageTest)
-    {  
-      cout<<"exp likelihood = "<<likelihood<<endl;
+    {
+        cout<<"exp likelihood = "<<likelihood<<endl;
     }
     //make hypotheses with pixels outside the image less likely.
     likelihood=likelihood*((double)usedInnerPoints/nPixels)*((double)usedInnerPoints/nPixels)*((double)usedOuterPoints/nPixels)*((double)usedOuterPoints/nPixels);
     if(_staticImageTest)
-    {  
-      cout<<"likelihood compensating for non-visible points = "<<likelihood<<endl;
-    }  
+    {
+        cout<<"likelihood compensating for non-visible points = "<<likelihood<<endl;
+    }
     return false;
 }
 
 
 
-bool PF3DTracker::systematic_resampling(CvMat* oldParticlesState, CvMat* oldParticlesWeights, CvMat* newParticlesState, CvMat* cumWeight)
+bool PF3DTracker::systematic_resampling(cv::Mat & oldParticlesState, cv::Mat & oldParticlesWeights, cv::Mat & newParticlesState, cv::Mat & cumWeight)
 {
     //function [newParticlesState] = systematic_resampling(oldParticlesWeight, oldParticlesState)
 
@@ -1266,11 +1225,11 @@ bool PF3DTracker::systematic_resampling(CvMat* oldParticlesState, CvMat* oldPart
     sum=0;
     for(c1=0;c1<_nParticles;c1++)
     {
-        sum+=((double*)(oldParticlesWeights->data.ptr + oldParticlesWeights->step*0))[c1];
+        sum+=((double*)(oldParticlesWeights.data + oldParticlesWeights.step*0))[c1];
     }
     for(c1=0;c1<_nParticles;c1++)
     {
-        ((double*)(oldParticlesWeights->data.ptr + oldParticlesWeights->step*0))[c1] = (((double*)(oldParticlesWeights->data.ptr + oldParticlesWeights->step*0))[c1])/(double)sum;
+        ((double*)(oldParticlesWeights.data + oldParticlesWeights.step*0))[c1] = (((double*)(oldParticlesWeights.data + oldParticlesWeights.step*0))[c1])/(double)sum;
     }
 
 
@@ -1285,23 +1244,23 @@ bool PF3DTracker::systematic_resampling(CvMat* oldParticlesState, CvMat* oldPart
     //%COMPUTE THE ARRAY OF CUMULATIVE WEIGHTS
     //cumWeight=zeros(1,N+1);
     //cumWeight[0]=0;
-    ((double*)(cumWeight->data.ptr))[0]=0;
+    ((double*)(cumWeight.data))[0]=0;
     for(c1=0;c1<_nParticles;c1++)
     {
         //cumWeight[c1+1]=cumWeight[c1]+oldParticlesWeight[c1];
 
-        ((double*)(cumWeight->data.ptr))[c1+1]=((double*)(cumWeight->data.ptr))[c1]+((double*)(oldParticlesWeights->data.ptr + oldParticlesWeights->step*0))[c1];
-        //cout<<"cumulative at position "<<c1+1<<" = "<<((double*)(cumWeight->data.ptr))[c1+1]<<endl;
+        ((double*)(cumWeight.data))[c1+1]=((double*)(cumWeight.data))[c1]+((double*)(oldParticlesWeights.data + oldParticlesWeights.step*0))[c1];
+        //cout<<"cumulative at position "<<c1+1<<" = "<<((double*)(cumWeight.data))[c1+1]<<endl;
 
     }
     //CHECK IF THERE IS SOME ROUNDING ERROR IN THE END OF THE ARRAY.
     //if(cumWeight[_nParticles]!=1)
-    if(((double*)(cumWeight->data.ptr))[_nParticles]!=1)
+    if(((double*)(cumWeight.data))[_nParticles]!=1)
     {
         //fprintf('rounding error?\n');
-        //printf("cumWeight[_nParticles]==%15.10e\n",((double*)(cumWeight->data.ptr))[_nParticles]);
-        ((double*)(cumWeight->data.ptr))[_nParticles]=1;
-        if( ((double*)(cumWeight->data.ptr))[_nParticles]!=1)
+        //printf("cumWeight[_nParticles]==%15.10e\n",((double*)(cumWeight.data))[_nParticles]);
+        ((double*)(cumWeight.data))[_nParticles]=1;
+        if( ((double*)(cumWeight.data))[_nParticles]!=1)
         {
             //printf("still different\n");
         }
@@ -1311,8 +1270,8 @@ bool PF3DTracker::systematic_resampling(CvMat* oldParticlesState, CvMat* oldPart
         }
     }
 
-    //cout<<"cumulative at position "<<_nParticles-1<<" = "<<((double*)(cumWeight->data.ptr))[_nParticles-1]<<endl;
-    //cout<<"cumulative at position "<<_nParticles<<" = "<<((double*)(cumWeight->data.ptr))[_nParticles]<<endl;
+    //cout<<"cumulative at position "<<_nParticles-1<<" = "<<((double*)(cumWeight.data))[_nParticles-1]<<endl;
+    //cout<<"cumulative at position "<<_nParticles<<" = "<<((double*)(cumWeight.data))[_nParticles]<<endl;
 
     //%PERFORM THE ACTUAL RESAMPLING
     rIndex=0; //index of the randomized array
@@ -1322,18 +1281,18 @@ bool PF3DTracker::systematic_resampling(CvMat* oldParticlesState, CvMat* oldPart
     while(npIndex < numParticlesToGenerate) //martim
     {
         //siamo sicuri che deve essere >=? ??? !!! WARNING
-        if(((double*)(cumWeight->data.ptr))[cIndex]>=(double)rIndex/(double)numParticlesToGenerate+u) //martim
+        if(((double*)(cumWeight.data))[cIndex]>=(double)rIndex/(double)numParticlesToGenerate+u) //martim
         {
             //%particle cIndex-1 should be copied.
             //printf("replicating particle %d\n",cIndex-1);
             //newParticlesState(npIndex)=oldParticlesState(cIndex-1);
-            ((double*)(newParticlesState->data.ptr + newParticlesState->step*0))[npIndex]=((double*)(oldParticlesState->data.ptr + oldParticlesState->step*0))[cIndex-1];
-            ((double*)(newParticlesState->data.ptr + newParticlesState->step*1))[npIndex]=((double*)(oldParticlesState->data.ptr + oldParticlesState->step*1))[cIndex-1];
-            ((double*)(newParticlesState->data.ptr + newParticlesState->step*2))[npIndex]=((double*)(oldParticlesState->data.ptr + oldParticlesState->step*2))[cIndex-1];
-            ((double*)(newParticlesState->data.ptr + newParticlesState->step*3))[npIndex]=((double*)(oldParticlesState->data.ptr + oldParticlesState->step*3))[cIndex-1];
-            ((double*)(newParticlesState->data.ptr + newParticlesState->step*4))[npIndex]=((double*)(oldParticlesState->data.ptr + oldParticlesState->step*4))[cIndex-1];
-            ((double*)(newParticlesState->data.ptr + newParticlesState->step*5))[npIndex]=((double*)(oldParticlesState->data.ptr + oldParticlesState->step*5))[cIndex-1];
-            ((double*)(newParticlesState->data.ptr + newParticlesState->step*6))[npIndex]=0; //initializing weight
+            ((double*)(newParticlesState.data + newParticlesState.step*0))[npIndex]=((double*)(oldParticlesState.data + oldParticlesState.step*0))[cIndex-1];
+            ((double*)(newParticlesState.data + newParticlesState.step*1))[npIndex]=((double*)(oldParticlesState.data + oldParticlesState.step*1))[cIndex-1];
+            ((double*)(newParticlesState.data + newParticlesState.step*2))[npIndex]=((double*)(oldParticlesState.data + oldParticlesState.step*2))[cIndex-1];
+            ((double*)(newParticlesState.data + newParticlesState.step*3))[npIndex]=((double*)(oldParticlesState.data + oldParticlesState.step*3))[cIndex-1];
+            ((double*)(newParticlesState.data + newParticlesState.step*4))[npIndex]=((double*)(oldParticlesState.data + oldParticlesState.step*4))[cIndex-1];
+            ((double*)(newParticlesState.data + newParticlesState.step*5))[npIndex]=((double*)(oldParticlesState.data + oldParticlesState.step*5))[cIndex-1];
+            ((double*)(newParticlesState.data + newParticlesState.step*6))[npIndex]=0; //initializing weight
             rIndex=rIndex+1;
             npIndex=npIndex+1;
         }
@@ -1344,7 +1303,7 @@ bool PF3DTracker::systematic_resampling(CvMat* oldParticlesState, CvMat* oldPart
         }
     }
     
-    return false;        
+    return false;
 }
 
 
@@ -1353,7 +1312,7 @@ bool PF3DTracker::systematic_resampling(CvMat* oldParticlesState, CvMat* oldPart
 
 
 
-bool PF3DTracker::place3dPointsPerspective(CvMat* points, double x, double y, double z)
+bool PF3DTracker::place3dPointsPerspective(cv::Mat & points, double x, double y, double z)
 {
 
     
@@ -1370,27 +1329,27 @@ bool PF3DTracker::place3dPointsPerspective(CvMat* points, double x, double y, do
 
     
     //Rotation matrix Rz: [3 x 3]
-    ((double*)(_rzMat->data.ptr + _rzMat->step*0))[0]=  cosBeta;
-    ((double*)(_rzMat->data.ptr + _rzMat->step*0))[1]= -sinBeta;
-    ((double*)(_rzMat->data.ptr + _rzMat->step*0))[2]=        0;
-    ((double*)(_rzMat->data.ptr + _rzMat->step*1))[0]=  sinBeta;
-    ((double*)(_rzMat->data.ptr + _rzMat->step*1))[1]=  cosBeta;
-    ((double*)(_rzMat->data.ptr + _rzMat->step*1))[2]=        0;
-    ((double*)(_rzMat->data.ptr + _rzMat->step*2))[0]=        0;
-    ((double*)(_rzMat->data.ptr + _rzMat->step*2))[1]=        0;
-    ((double*)(_rzMat->data.ptr + _rzMat->step*2))[2]=        1;
+    ((double*)(_rzMat.data + _rzMat.step*0))[0]=  cosBeta;
+    ((double*)(_rzMat.data + _rzMat.step*0))[1]= -sinBeta;
+    ((double*)(_rzMat.data + _rzMat.step*0))[2]=        0;
+    ((double*)(_rzMat.data + _rzMat.step*1))[0]=  sinBeta;
+    ((double*)(_rzMat.data + _rzMat.step*1))[1]=  cosBeta;
+    ((double*)(_rzMat.data + _rzMat.step*1))[2]=        0;
+    ((double*)(_rzMat.data + _rzMat.step*2))[0]=        0;
+    ((double*)(_rzMat.data + _rzMat.step*2))[1]=        0;
+    ((double*)(_rzMat.data + _rzMat.step*2))[2]=        1;
 
 
     //Rotation matrix Ry: [3 x 3]
-    ((double*)(_ryMat->data.ptr + _ryMat->step*0))[0]=  cosAlpha;
-    ((double*)(_ryMat->data.ptr + _ryMat->step*0))[1]=         0;
-    ((double*)(_ryMat->data.ptr + _ryMat->step*0))[2]=  sinAlpha;
-    ((double*)(_ryMat->data.ptr + _ryMat->step*1))[0]=         0;
-    ((double*)(_ryMat->data.ptr + _ryMat->step*1))[1]=         1;
-    ((double*)(_ryMat->data.ptr + _ryMat->step*1))[2]=         0;
-    ((double*)(_ryMat->data.ptr + _ryMat->step*2))[0]= -sinAlpha;
-    ((double*)(_ryMat->data.ptr + _ryMat->step*2))[1]=         0;
-    ((double*)(_ryMat->data.ptr + _ryMat->step*2))[2]=  cosAlpha;
+    ((double*)(_ryMat.data + _ryMat.step*0))[0]=  cosAlpha;
+    ((double*)(_ryMat.data + _ryMat.step*0))[1]=         0;
+    ((double*)(_ryMat.data + _ryMat.step*0))[2]=  sinAlpha;
+    ((double*)(_ryMat.data + _ryMat.step*1))[0]=         0;
+    ((double*)(_ryMat.data + _ryMat.step*1))[1]=         1;
+    ((double*)(_ryMat.data + _ryMat.step*1))[2]=         0;
+    ((double*)(_ryMat.data + _ryMat.step*2))[0]= -sinAlpha;
+    ((double*)(_ryMat.data + _ryMat.step*2))[1]=         0;
+    ((double*)(_ryMat.data + _ryMat.step*2))[2]=  cosAlpha;
     
     
 
@@ -1406,7 +1365,7 @@ bool PF3DTracker::place3dPointsPerspective(CvMat* points, double x, double y, do
     //used to be:
     /*
         returnValue=ippmMul_mm_32f(ry,      rzStride1,     Stride2,  rzColumns,      rzRows,
-                                points,  pointsStride1, Stride2,  pointsColumns,  pointsRows, 
+                                points,  pointsStride1, Stride2,  pointsColumns,  pointsRows,
                                 points2, pointsStride1, Stride2);
         if(returnValue!=0)
         {
@@ -1462,8 +1421,8 @@ bool PF3DTracker::place3dPointsPerspective(CvMat* points, double x, double y, do
 
     //used to be:
     /*
-    returnValue=ippmMul_mm_32f(rz,      rzStride1,     Stride2,  rzColumns,      rzRows, 
-                               points2,  pointsStride1, Stride2,  pointsColumns,  pointsRows, 
+    returnValue=ippmMul_mm_32f(rz,      rzStride1,     Stride2,  rzColumns,      rzRows,
+                               points2,  pointsStride1, Stride2,  pointsColumns,  pointsRows,
                                points, pointsStride1, Stride2);
     if(returnValue!=0)
     {
@@ -1477,101 +1436,101 @@ bool PF3DTracker::place3dPointsPerspective(CvMat* points, double x, double y, do
 }
 
 
-int PF3DTracker::perspective_projection(CvMat* xyz, double fx, double fy, double cx, double cy, CvMat* uv)
+int PF3DTracker::perspective_projection(cv::Mat & xyz, double fx, double fy, double cx, double cy, cv::Mat & uv)
 {
     //fill the projection matrix with the current values.
-    ((double*)(_projectionMat->data.ptr + _projectionMat->step*0))[0]= fx;
-    ((double*)(_projectionMat->data.ptr + _projectionMat->step*0))[1]=  0;
-    ((double*)(_projectionMat->data.ptr + _projectionMat->step*0))[2]= cx;
-    ((double*)(_projectionMat->data.ptr + _projectionMat->step*1))[0]=  0;
-    ((double*)(_projectionMat->data.ptr + _projectionMat->step*1))[1]= fy;
-    ((double*)(_projectionMat->data.ptr + _projectionMat->step*1))[2]= cy;
+    ((double*)(_projectionMat.data + _projectionMat.step*0))[0]= fx;
+    ((double*)(_projectionMat.data + _projectionMat.step*0))[1]=  0;
+    ((double*)(_projectionMat.data + _projectionMat.step*0))[2]= cx;
+    ((double*)(_projectionMat.data + _projectionMat.step*1))[0]=  0;
+    ((double*)(_projectionMat.data + _projectionMat.step*1))[1]= fy;
+    ((double*)(_projectionMat.data + _projectionMat.step*1))[2]= cy;
 
-//     int a,b;
-//     for(a=0;a<2;a++)
-//     {
-//         cout<<"LINE ";
-//         for(b=0;b<3;b++)
-//         {
-//             cout<<((double*)(_projectionMat->data.ptr + _projectionMat->step*a))[b]<<",";
-//         }
-//         cout<<"\n";
-//     }
-//     cout<<"\n";
+    //     int a,b;
+    //     for(a=0;a<2;a++)
+    //     {
+    //         cout<<"LINE ";
+    //         for(b=0;b<3;b++)
+    //         {
+    //             cout<<((double*)(_projectionMat.data + _projectionMat.step*a))[b]<<",";
+    //         }
+    //         cout<<"\n";
+    //     }
+    //     cout<<"\n";
 
-//     for(a=0;a<3;a++)
-//     {
-//         cout<<"LINE ";
-//         for(b=0;b<2*nPixels;b++)
-//         {
-//             cout<<((double*)(xyz->data.ptr + xyz->step*a))[b]<<",";
-//         }
-//         cout<<"\n";
-//     }
-//     cout<<"\n";
+    //     for(a=0;a<3;a++)
+    //     {
+    //         cout<<"LINE ";
+    //         for(b=0;b<2*nPixels;b++)
+    //         {
+    //             cout<<((double*)(xyz.data + xyz.step*a))[b]<<",";
+    //         }
+    //         cout<<"\n";
+    //     }
+    //     cout<<"\n";
 
     //#####################################################
     //For every column of XYZ, divide each element by Z(i).
     //#####################################################
     //setup
 
-    cvInitMatHeader( _xyzMat1, 1, 2*nPixels, CV_64FC1, xyz->data.ptr );
-    cvInitMatHeader( _xyzMat2, 1, 2*nPixels, CV_64FC1, xyz->data.ptr + xyz->step*1);
-    cvInitMatHeader( _xyzMat3, 1, 2*nPixels, CV_64FC1, xyz->data.ptr + xyz->step*2);
+    cvInitMatHeader( _xyzMat1, 1, 2*nPixels, CV_64FC1, xyz.data );
+    cvInitMatHeader( _xyzMat2, 1, 2*nPixels, CV_64FC1, xyz.data + xyz.step*1);
+    cvInitMatHeader( _xyzMat3, 1, 2*nPixels, CV_64FC1, xyz.data + xyz.step*2);
 
     //divide X (the first line of xyz) by Z (the third line of xyz).
     cvDiv( _xyzMat1, _xyzMat3, _xyzMat1, 1 );
 
-//     for(a=0;a<3;a++)
-//     {
-//         cout<<"LINE ";
-//         for(b=0;b<2*nPixels;b++)
-//         {
-//             cout<<((double*)(xyz->data.ptr + xyz->step*a))[b]<<",";
-//         }
-//         cout<<"\n";
-//     }
-//     cout<<"\n";
+    //     for(a=0;a<3;a++)
+    //     {
+    //         cout<<"LINE ";
+    //         for(b=0;b<2*nPixels;b++)
+    //         {
+    //             cout<<((double*)(xyz.data + xyz.step*a))[b]<<",";
+    //         }
+    //         cout<<"\n";
+    //     }
+    //     cout<<"\n";
 
     //divide Y (the second line of xyz) by Z (the third line of xyz).
     cvDiv( _xyzMat2, _xyzMat3, _xyzMat2, 1 );
 
-//     for(a=0;a<3;a++)
-//     {
-//         cout<<"LINE ";
-//         for(b=0;b<2*nPixels;b++)
-//         {
-//             cout<<((double*)(xyz->data.ptr + xyz->step*a))[b]<<",";
-//         }
-//         cout<<"\n";
-//     }
-//     cout<<"\n";
+    //     for(a=0;a<3;a++)
+    //     {
+    //         cout<<"LINE ";
+    //         for(b=0;b<2*nPixels;b++)
+    //         {
+    //             cout<<((double*)(xyz.data + xyz.step*a))[b]<<",";
+    //         }
+    //         cout<<"\n";
+    //     }
+    //     cout<<"\n";
 
     //set all elements of Z to 1.
     cvSet(_xyzMat3,(cvScalar(1)));
 
-//     for(a=0;a<3;a++)
-//     {
-//         cout<<"LINE ";
-//         for(r0;b<2*nPixels;b++)
-//         {
-//             cout<<((double*)(xyz->data.ptr + xyz->step*a))[b]<<",";
-//         }
-//         cout<<"\n";
-//     }
-//     cout<<"\n";
+    //     for(a=0;a<3;a++)
+    //     {
+    //         cout<<"LINE ";
+    //         for(r0;b<2*nPixels;b++)
+    //         {
+    //             cout<<((double*)(xyz.data + xyz.step*a))[b]<<",";
+    //         }
+    //         cout<<"\n";
+    //     }
+    //     cout<<"\n";
 
     //#########################
     //UV=projectionMat*(XYZ/Z).
     //#########################
     cvMatMul(_projectionMat,xyz,uv);
 
-/*    for(a=0;a<2;a++)
+    /*    for(a=0;a<2;a++)
     {
         cout<<"LINE ";
         for(b=0;b<2*nPixels;b++)
         {
-            cout<<((double*)(_uv->data.ptr + _uv->step*a))[b]<<",";
+            cout<<((double*)(_uv.data + _uv.step*a))[b]<<",";
         }
         cout<<"\n";
     }
@@ -1583,7 +1542,7 @@ int PF3DTracker::perspective_projection(CvMat* xyz, double fx, double fy, double
 
 
 
-bool PF3DTracker::computeHistogramFromRgbImage(CvMat* uv, IplImage *image,  CvMatND* innerHistogramMat, double &usedInnerPoints, CvMatND* outerHistogramMat, double &usedOuterPoints)
+bool PF3DTracker::computeHistogramFromRgbImage(cv::Mat & uv, IplImage *image,  CvMatND* innerHistogramMat, double &usedInnerPoints, CvMatND* outerHistogramMat, double &usedOuterPoints)
 {
     //This should cross the R and B channels
     int count;
@@ -1599,19 +1558,19 @@ bool PF3DTracker::computeHistogramFromRgbImage(CvMat* uv, IplImage *image,  CvMa
     //used to be: ippsZero_32f(&innerHistogram[0][0][0], YBins*UBins*VBins);
     for(count=0;count<nPixels;count++)
     {
-        u=(int)((double*)(uv->data.ptr + uv->step*0))[count]; //truncating ??? !!! warning
-        v=(int)((double*)(uv->data.ptr + uv->step*1))[count]; //truncating ??? !!! warning
-        if((v<image->height)&&(v>=0)&&(u<image->width)&&(u>=0))
+        u=(int)((double*)(uv.data + uv.step*0))[count]; //truncating ??? !!! warning
+        v=(int)((double*)(uv.data + uv.step*1))[count]; //truncating ??? !!! warning
+        if((v<image.rows)&&(v>=0)&&(u<image.cols)&&(u>=0))
         {
-          
-          
+
+
             //transform the color from RGB to HSI bin.
-            r=(((uchar*)(image->imageData + image->widthStep*v))[u*3+0]);
-            g=(((uchar*)(image->imageData + image->widthStep*v))[u*3+1]);
-            b=(((uchar*)(image->imageData + image->widthStep*v))[u*3+2]);
+            r=(((uchar*)(image.data + image.step*v))[u*3+0]);
+            g=(((uchar*)(image.data + image.step*v))[u*3+1]);
+            b=(((uchar*)(image.data + image.step*v))[u*3+2]);
             index=r*65536+g*256+b;
             //increase the bin counter
-            *((double*)(innerHistogramMat->data.ptr + _lut[index].y*innerHistogramMat->dim[0].step + _lut[index].u*innerHistogramMat->dim[1].step + _lut[index].v*innerHistogramMat->dim[2].step)) +=1;
+            *((double*)(innerHistogramMat.data + _lut[index].y*innerHistogramMat->dim[0].step + _lut[index].u*innerHistogramMat->dim[1].step + _lut[index].v*innerHistogramMat->dim[2].step)) +=1;
             //used to be: innerHistogram[_lut[index].y][_lut[index].u][_lut[index].v]+=1; //increment the correct bin counter.
             usedInnerPoints+=1;
         }
@@ -1633,17 +1592,17 @@ bool PF3DTracker::computeHistogramFromRgbImage(CvMat* uv, IplImage *image,  CvMa
     //used to be ippsZero_32f(&outerHistogram[0][0][0], YBins*UBins*VBins);
     for(count=nPixels;count<2*nPixels;count++)
     {
-        u=(int)((double*)(uv->data.ptr + uv->step*0))[count]; //truncating ??? !!! warning
-        v=(int)((double*)(uv->data.ptr + uv->step*1))[count]; //truncating ??? !!! warning
-        if((v<image->height)&&(v>=0)&&(u<image->width)&&(u>=0))
+        u=(int)((double*)(uv.data + uv.step*0))[count]; //truncating ??? !!! warning
+        v=(int)((double*)(uv.data + uv.step*1))[count]; //truncating ??? !!! warning
+        if((v<image.rows)&&(v>=0)&&(u<image.cols)&&(u>=0))
         {
             //transform the color from RGB to HSI bin.
-            r=(((uchar*)(image->imageData + image->widthStep*v))[u*3+0]);
-            g=(((uchar*)(image->imageData + image->widthStep*v))[u*3+1]);
-            b=(((uchar*)(image->imageData + image->widthStep*v))[u*3+2]);
+            r=(((uchar*)(image.data + image.step*v))[u*3+0]);
+            g=(((uchar*)(image.data + image.step*v))[u*3+1]);
+            b=(((uchar*)(image.data + image.step*v))[u*3+2]);
             index=r*65536+g*256+b;
             //increase the bin counter
-            *((double*)(outerHistogramMat->data.ptr + _lut[index].y*outerHistogramMat->dim[0].step + _lut[index].u*outerHistogramMat->dim[1].step + _lut[index].v*outerHistogramMat->dim[2].step)) +=1;
+            *((double*)(outerHistogramMat.data + _lut[index].y*outerHistogramMat->dim[0].step + _lut[index].u*outerHistogramMat->dim[1].step + _lut[index].v*outerHistogramMat->dim[2].step)) +=1;
             //used to be: outerHistogram[_lut[index].y][_lut[index].u][_lut[index].v]+=1; //increment the correct bin counter.
             usedOuterPoints+=1;
         }
@@ -1666,71 +1625,71 @@ bool PF3DTracker::calculateLikelihood(CvMatND* templateHistogramMat, CvMatND* in
     
     if(_staticImageTest)
     {
-      cout<<"Inner histogram\n";
-      for(a=0;a<YBins;a++)
-      {  
-          for(b=0;b<UBins;b++)
-          {  
-              for(c=0;c<VBins;c++)
-              {            
-                  cout<<*((double*)(innerHistogramMat->data.ptr + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step))<<" ";
-              }
-              cout<< " A"<<endl;
-          }
-          cout<<endl;
-      }  
-              
-      cout<<"Outer histogram\n";
-          for(a=0;a<YBins;a++)
-      {  
-          for(b=0;b<UBins;b++)
-          {  
-              for(c=0;c<VBins;c++)
-              {            
-                  cout<<*((double*)(outerHistogramMat->data.ptr + a*outerHistogramMat->dim[0].step + b*outerHistogramMat->dim[1].step + c*outerHistogramMat->dim[2].step))<<" ";
-              }
-              cout<< " B"<<endl;
-          }
-          cout<<endl;
-      }  
+        cout<<"Inner histogram\n";
+        for(a=0;a<YBins;a++)
+        {
+            for(b=0;b<UBins;b++)
+            {
+                for(c=0;c<VBins;c++)
+                {
+                    cout<<*((double*)(innerHistogramMat.data + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step))<<" ";
+                }
+                cout<< " A"<<endl;
+            }
+            cout<<endl;
+        }
 
-      cout<<"Template histogram\n";
-          for(a=0;a<YBins;a++)
-      {  
-          for(b=0;b<UBins;b++)
-          {  
-              for(c=0;c<VBins;c++)
-              {            
-                  cout<<*((double*)(templateHistogramMat->data.ptr + a*templateHistogramMat->dim[0].step + b*templateHistogramMat->dim[1].step + c*templateHistogramMat->dim[2].step))<<" ";
-              }
-              cout<< " C"<<endl;
-          }
-          cout<<endl;
-      }  
+        cout<<"Outer histogram\n";
+        for(a=0;a<YBins;a++)
+        {
+            for(b=0;b<UBins;b++)
+            {
+                for(c=0;c<VBins;c++)
+                {
+                    cout<<*((double*)(outerHistogramMat.data + a*outerHistogramMat->dim[0].step + b*outerHistogramMat->dim[1].step + c*outerHistogramMat->dim[2].step))<<" ";
+                }
+                cout<< " B"<<endl;
+            }
+            cout<<endl;
+        }
+
+        cout<<"Template histogram\n";
+        for(a=0;a<YBins;a++)
+        {
+            for(b=0;b<UBins;b++)
+            {
+                for(c=0;c<VBins;c++)
+                {
+                    cout<<*((double*)(templateHistogramMat.data + a*templateHistogramMat->dim[0].step + b*templateHistogramMat->dim[1].step + c*templateHistogramMat->dim[2].step))<<" ";
+                }
+                cout<< " C"<<endl;
+            }
+            cout<<endl;
+        }
     }
     
-/*    cout<<"injecting fake inner histogram\n";
+    /*    cout<<"injecting fake inner histogram\n";
     for(a=0;a<YBins;a++)
-    {  
+    {
         for(b=0;b<UBins;b++)
-        {  
+        {
             for(c=0;c<VBins;c++)
-            {            
-                *((double*)(innerHistogramMat->data.ptr + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step)) = 
-                *((double*)(templateHistogramMat->data.ptr + a*templateHistogramMat->dim[0].step + b*templateHistogramMat->dim[1].step + c*templateHistogramMat->dim[2].step));
+            {
+                *((double*)(innerHistogramMat.data + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step)) =
+                *((double*)(templateHistogramMat.data + a*templateHistogramMat->dim[0].step + b*templateHistogramMat->dim[1].step + c*templateHistogramMat->dim[2].step));
              }
         }
-    }  
- 
+    }
+
     cout<<"injecting fake outer histogram\n";
     for(a=0;a<YBins;a++)
-    {  
+    {
         for(b=0;b<UBins;b++)
-        {  
+        {
             for(c=0;c<VBins;c++)
-            {            
-                *((double*)(outerHistogramMat->data.ptr + a*outerHistogramMat->dim[0].step + b*outerHistogramMat->dim[1].step + c*outerHistogramMat->dim[2].step)) = 0.0;
-            }   
+            {
+                *((double*)(outerHistogramMat.data + a*outerHistogramMat->dim[0].step + b*outerHistogramMat->dim[1].step + c*outerHistogramMat->dim[2].step)) = 0.0;
+            }
         }
     }  */
     
@@ -1738,30 +1697,30 @@ bool PF3DTracker::calculateLikelihood(CvMatND* templateHistogramMat, CvMatND* in
         for(b=0;b<UBins;b++)
             for(c=0;c<VBins;c++)
             {
-                likelihood=likelihood + sqrt( 
-                *((double*)(innerHistogramMat->data.ptr + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step)) *
-                *((double*)(templateHistogramMat->data.ptr + a*templateHistogramMat->dim[0].step + b*templateHistogramMat->dim[1].step + c*templateHistogramMat->dim[2].step)))
-                - _insideOutsideDifferenceWeight*sqrt(
-                *((double*)(outerHistogramMat->data.ptr + a*outerHistogramMat->dim[0].step + b*outerHistogramMat->dim[1].step + c*outerHistogramMat->dim[2].step)) *
-                *((double*)(innerHistogramMat->data.ptr + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step)));
+                likelihood=likelihood + sqrt(
+                            *((double*)(innerHistogramMat.data + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step)) *
+                        *((double*)(templateHistogramMat.data + a*templateHistogramMat->dim[0].step + b*templateHistogramMat->dim[1].step + c*templateHistogramMat->dim[2].step)))
+                        - _insideOutsideDifferenceWeight*sqrt(
+                            *((double*)(outerHistogramMat.data + a*outerHistogramMat->dim[0].step + b*outerHistogramMat->dim[1].step + c*outerHistogramMat->dim[2].step)) *
+                        *((double*)(innerHistogramMat.data + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step)));
 
-/*              used to be
+                /*              used to be
                 likelihood=likelihood + sqrt(
                 innerHistogram[a][b][c]*
                 templateHistogram[a][b][c])
                 - _insideOutsideDifferenceWeight*sqrt(
                 outerHistogram[a][b][c]
                 *innerHistogram[a][b][c]);*/
-             }
+            }
     if(_staticImageTest)
     {
-      cout<<"initial likelihood = "<<likelihood<<endl;
-    }  
+        cout<<"initial likelihood = "<<likelihood<<endl;
+    }
     likelihood=(likelihood+_insideOutsideDifferenceWeight)/(1+_insideOutsideDifferenceWeight);
     if(_staticImageTest)
     {
-      cout<<"normalized likelihood = "<<likelihood<<endl;
-    }  
+        cout<<"normalized likelihood = "<<likelihood<<endl;
+    }
     if(likelihood<0)
         cout<<"LIKELIHOOD<0!!!\n";
     return false;
@@ -1770,14 +1729,14 @@ bool PF3DTracker::calculateLikelihood(CvMatND* templateHistogramMat, CvMatND* in
 
 
 
-void printMat(CvMat* A)
+void printMat(cv::Mat & A)
 {
     int a,b;
-    for(a=0;a<A->rows;a++)
+    for(a=0;a<A.rows;a++)
     {
-        for(b=0;b<A->cols;b++)
+        for(b=0;b<A.cols;b++)
         {
-            cout<<((double*)(A->data.ptr + A->step*a))[b]<<",";
+            cout<<((double*)(A.data + A.step*a))[b]<<",";
         }
         cout<<"\n";
     }
@@ -1785,15 +1744,15 @@ void printMat(CvMat* A)
 }
 
 
-void PF3DTracker::drawSampledLinesPerspective(CvMat* model3dPointsMat, double x, double y, double z, IplImage *image,double _perspectiveFx,double  _perspectiveFy ,double _perspectiveCx,double  _perspectiveCy ,int R, int G, int B, double &meanU, double &meanV)
+void PF3DTracker::drawSampledLinesPerspective(cv::Mat & model3dPointsMat, double x, double y, double z, cv::Mat & image,double _perspectiveFx,double  _perspectiveFy ,double _perspectiveCx,double  _perspectiveCy ,int R, int G, int B, double &meanU, double &meanV)
 {
 
 
     bool failure;
-    //CvMat* uv=cvCreateMat(2,2*nPixels,CV_32FC1);
+    //cv::Mat & uv=cvCreateMat(2,2*nPixels,CV_32FC1);
 
     //create a copy of the 3D original points.
-    cvCopy(model3dPointsMat,_drawingMat);
+    model3dPointsMat.copyTo(_drawingMat);
 
     //used to be:
     //     Ipp32f model3dPointsDuplicate[3][2*nPixels];
@@ -1806,9 +1765,9 @@ void PF3DTracker::drawSampledLinesPerspective(CvMat* model3dPointsMat, double x,
     //****************************
     //ROTOTRANSLATE THE 3D POINTS.
     //****************************
-        failure=place3dPointsPerspective(_drawingMat,x,y,z);
-        //cout<<"rototraslated points:\n";
-        //printMatrix(&model3dPointsDuplicate[0][0],2*nPixels,3);
+    failure=place3dPointsPerspective(_drawingMat,x,y,z);
+    //cout<<"rototraslated points:\n";
+    //printMatrix(&model3dPointsDuplicate[0][0],2*nPixels,3);
 
 
 
@@ -1817,49 +1776,49 @@ void PF3DTracker::drawSampledLinesPerspective(CvMat* model3dPointsMat, double x,
     //***********************
     //PROJECT 3D POINTS TO 2D
     //***********************
-        failure= perspective_projection(_drawingMat, _perspectiveFx, _perspectiveFy, _perspectiveCx, _perspectiveCy, _uv)!=0;
-        if(failure)
-        {
-            cout<<"I had troubles projecting the points.\n";
-        }
-        //used to be:
-        //         //(Ipp32f *xyz, int xyzColumns, int xyzRows, int xyzStride1, int xyzStride2, double fx, double fy, Ipp32f u0, Ipp32f v0, Ipp32f *uv, int uvStride1, int uvStride2
-        //         failure=perspective_projection(&model3dPointsDuplicate[0][0],2*nPixels,3,sizeof(Ipp32f)*2*nPixels,sizeof(Ipp32f),_perspectiveFx,  _perspectiveFy , _perspectiveCx,  _perspectiveCy,&uv[0][0],sizeof(Ipp32f)*2*nPixels,sizeof(Ipp32f));
-        //
-        //         if(failure)
-        //         {
-        //             cout<<"I had troubles projecting the points.\n";
-        //         }
+    failure= perspective_projection(_drawingMat, _perspectiveFx, _perspectiveFy, _perspectiveCx, _perspectiveCy, _uv)!=0;
+    if(failure)
+    {
+        cout<<"I had troubles projecting the points.\n";
+    }
+    //used to be:
+    //         //(Ipp32f *xyz, int xyzColumns, int xyzRows, int xyzStride1, int xyzStride2, double fx, double fy, Ipp32f u0, Ipp32f v0, Ipp32f *uv, int uvStride1, int uvStride2
+    //         failure=perspective_projection(&model3dPointsDuplicate[0][0],2*nPixels,3,sizeof(Ipp32f)*2*nPixels,sizeof(Ipp32f),_perspectiveFx,  _perspectiveFy , _perspectiveCx,  _perspectiveCy,&uv[0][0],sizeof(Ipp32f)*2*nPixels,sizeof(Ipp32f));
+    //
+    //         if(failure)
+    //         {
+    //             cout<<"I had troubles projecting the points.\n";
+    //         }
 
 
 
 
-    //DRAW    
+    //DRAW
     int conta,uPosition,vPosition;
     meanU=0;
     meanV=0;
     for(conta=0;conta<nPixels;conta++)
     {
-        meanU=meanU+((double*)(_uv->data.ptr + _uv->step*0))[conta];
-        meanV=meanV+((double*)(_uv->data.ptr + _uv->step*1))[conta];
+        meanU=meanU+((double*)(_uv.data + _uv.step*0))[conta];
+        meanV=meanV+((double*)(_uv.data + _uv.step*1))[conta];
 
 
-                vPosition= (int)((double*)(_uv->data.ptr + _uv->step*1))[conta];
-                uPosition= (int)((double*)(_uv->data.ptr + _uv->step*0))[conta];
-                if((uPosition<image->width)&&(uPosition>=0)&&(vPosition<image->height)&&(vPosition>=0))
-                {
-                  (((uchar*)(image->imageData + image->widthStep*vPosition))[uPosition*3+0])=R;
-                  (((uchar*)(image->imageData + image->widthStep*vPosition))[uPosition*3+1])=G;
-                  (((uchar*)(image->imageData + image->widthStep*vPosition))[uPosition*3+2])=B;
-                }
-                vPosition= (int)((double*)(_uv->data.ptr + _uv->step*1))[conta+nPixels];
-                uPosition= (int)((double*)(_uv->data.ptr + _uv->step*0))[conta+nPixels];
-                if((uPosition<image->width)&&(uPosition>=0)&&(vPosition<image->height)&&(vPosition>=0))
-                {
-                  (((uchar*)(image->imageData + image->widthStep*vPosition))[uPosition*3+0])=R;
-                  (((uchar*)(image->imageData + image->widthStep*vPosition))[uPosition*3+1])=G;
-                  (((uchar*)(image->imageData + image->widthStep*vPosition))[uPosition*3+2])=B;
-                }
+        vPosition= (int)((double*)(_uv.data + _uv.step*1))[conta];
+        uPosition= (int)((double*)(_uv.data + _uv.step*0))[conta];
+        if((uPosition<image.cols)&&(uPosition>=0)&&(vPosition<image.rows)&&(vPosition>=0))
+        {
+            (((uchar*)(image.data + image.step*vPosition))[uPosition*3+0])=R;
+            (((uchar*)(image.data + image.step*vPosition))[uPosition*3+1])=G;
+            (((uchar*)(image.data + image.step*vPosition))[uPosition*3+2])=B;
+        }
+        vPosition= (int)((double*)(_uv.data + _uv.step*1))[conta+nPixels];
+        uPosition= (int)((double*)(_uv.data + _uv.step*0))[conta+nPixels];
+        if((uPosition<image.cols)&&(uPosition>=0)&&(vPosition<image.rows)&&(vPosition>=0))
+        {
+            (((uchar*)(image.data + image.step*vPosition))[uPosition*3+0])=R;
+            (((uchar*)(image.data + image.step*vPosition))[uPosition*3+1])=G;
+            (((uchar*)(image.data + image.step*vPosition))[uPosition*3+2])=B;
+        }
 
     }
 
@@ -1867,11 +1826,11 @@ void PF3DTracker::drawSampledLinesPerspective(CvMat* model3dPointsMat, double x,
     int meanUInt=(int)meanU;
     meanV=floor(meanV/nPixels);
     int meanVInt=(int)meanV;
-    if((meanUInt<image->width)&&(meanUInt>=0)&&(meanVInt<image->height)&&(meanVInt>=0))
+    if((meanUInt<image.cols)&&(meanUInt>=0)&&(meanVInt<image.rows)&&(meanVInt>=0))
     {
-      (((uchar*)(image->imageData + image->widthStep*meanVInt))[meanUInt*3+0])=R;
-      (((uchar*)(image->imageData + image->widthStep*meanVInt))[meanUInt*3+1])=G;
-      (((uchar*)(image->imageData + image->widthStep*meanVInt))[meanUInt*3+2])=B;
+        (((uchar*)(image.data + image.step*meanVInt))[meanUInt*3+0])=R;
+        (((uchar*)(image.data + image.step*meanVInt))[meanUInt*3+1])=G;
+        (((uchar*)(image.data + image.step*meanVInt))[meanUInt*3+2])=B;
     }
 
 
