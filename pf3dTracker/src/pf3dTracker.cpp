@@ -90,7 +90,7 @@ void tic(){ time1=clock(); }
 double tac(){ return (double)(clock()-time1)/(double)CLOCKS_PER_SEC;}
 
 
-void printMat(cv::Mat & A);
+void printMat(const cv::Mat & A);
 
 
 //constructor
@@ -1017,6 +1017,7 @@ bool PF3DTracker::computeTemplateHistogram(string imageFileName,string dataFileN
     if(usedPoints>0)
     {
         //histogram=histogram/usedPoints
+        //histogram*=1/usedPoints;
         cvConvertScale( histogram, histogram, 1/usedPoints, 0 );
         //used to be: ipps DivC_32f_I(usedPoints, &histogram[0][0][0], YBins*UBins*VBins);
     }
@@ -1124,7 +1125,8 @@ bool PF3DTracker::readMotionModelMatrix(cv::Mat & points, string fileName)
             for(c2=0;c2<7;c2++)
             {
                 fin.getline(line, 14);
-                cvmSet(points,c1,c2,atof(line));
+                points.at<double>(c1,c2)=atof(line);
+                //cvmSet(points,c1,c2,atof(line));
 
             }
         return false;
@@ -1511,7 +1513,7 @@ int PF3DTracker::perspective_projection(cv::Mat & xyz, double fx, double fy, dou
     //#########################
     //UV=projectionMat*(XYZ/Z).
     //#########################
-    cvMatMul(_projectionMat,xyz,uv);
+    cv::multiply(_projectionMat,xyz,uv);
 
     /*    for(a=0;a<2;a++)
     {
@@ -1634,7 +1636,7 @@ bool PF3DTracker::calculateLikelihood(CvMatND* templateHistogramMat, CvMatND* in
             {
                 for(c=0;c<VBins;c++)
                 {
-                    cout<<*((double*)(outerHistogramMat.data + a*outerHistogramMat->dim[0].step + b*outerHistogramMat->dim[1].step + c*outerHistogramMat->dim[2].step))<<" ";
+                    cout<<*((double*)(outerHistogramMat->data + a*outerHistogramMat->dim[0].step + b*outerHistogramMat->dim[1].step + c*outerHistogramMat->dim[2].step))<<" ";
                 }
                 cout<< " B"<<endl;
             }
@@ -1717,7 +1719,7 @@ bool PF3DTracker::calculateLikelihood(CvMatND* templateHistogramMat, CvMatND* in
 
 
 
-void printMat(cv::Mat & A)
+void printMat(const cv::Mat & A)
 {
     int a,b;
     for(a=0;a<A.rows;a++)
@@ -1734,8 +1736,6 @@ void printMat(cv::Mat & A)
 
 void PF3DTracker::drawSampledLinesPerspective(cv::Mat & model3dPointsMat, double x, double y, double z, cv::Mat & image,double _perspectiveFx,double  _perspectiveFy ,double _perspectiveCx,double  _perspectiveCy ,int R, int G, int B, double &meanU, double &meanV)
 {
-
-
     bool failure;
     //cv::Mat & uv=cvCreateMat(2,2*nPixels,CV_32FC1);
 
