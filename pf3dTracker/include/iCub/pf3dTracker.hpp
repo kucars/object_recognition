@@ -113,11 +113,11 @@ private:
     double _attentionOutput;
     double _attentionOutputMax;
     double _attentionOutputDecrease;
-    CvRNG rngState; //something needed by the random number generator
+    cv::RNG rngState; //something needed by the random number generator
     bool _doneInitializing;
 
     Lut*   _lut;
-    cv::Mat & _A;
+    cv::Mat _A;
     int _nParticles;
     double _accelStDev;
     double _insideOutsideDifferenceWeight;
@@ -133,46 +133,46 @@ private:
 
 
     //not sure which of these are really used.
-    cv::Mat & _rzMat;      //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _ryMat;      //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _points2Mat; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _p2Mat1;     //pointer to the first row of _points2Mat
-    cv::Mat & _p2Mat3;     //pointer to the third row of _points2Mat
-    cv::Mat & _tempMat;    //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _tempMat1;   //pointer to the first row of _tempMat
-    cv::Mat & _tempMat2;   //pointer to the first row of _tempMat
-    cv::Mat & _tempMat3;   //pointer to the first row of _tempMat
-    cv::Mat & _drawingMat; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _projectionMat; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _xyzMat1; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _xyzMat2; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _xyzMat3; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _particles1; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _particles2; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _particles3; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _particles4; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _particles5; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _particles6; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _particles7; //this is used during some operations... it is defined here to avoid repeated instantiations
-    cv::Mat & _particles1to6;
-    cv::Mat & _newParticles1to6;
-    cv::Mat & _uv;
+    cv::Mat _rzMat;      //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _ryMat;      //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _points2Mat; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _p2Mat1;     //pointer to the first row of _points2Mat
+    cv::Mat _p2Mat3;     //pointer to the third row of _points2Mat
+    cv::Mat _tempMat;    //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _tempMat1;   //pointer to the first row of _tempMat
+    cv::Mat _tempMat2;   //pointer to the first row of _tempMat
+    cv::Mat _tempMat3;   //pointer to the first row of _tempMat
+    cv::Mat _drawingMat; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _projectionMat; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _xyzMat1; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _xyzMat2; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _xyzMat3; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _particles1; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _particles2; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _particles3; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _particles4; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _particles5; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _particles6; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _particles7; //this is used during some operations... it is defined here to avoid repeated instantiations
+    cv::Mat _particles1to6;
+    cv::Mat _newParticles1to6;
+    cv::Mat _uv;
 
     //resampling-related stuff
-    cv::Mat & _nChildren;
-    cv::Mat & _label;
-    cv::Mat & _u;
-    cv::Mat & _ramp;
+    cv::Mat _nChildren;
+    cv::Mat _label;
+    cv::Mat _u;
+    cv::Mat _ramp;
 
     //new resampling-related stuff
-    cv::Mat & _cumWeight;
+    cv::Mat _cumWeight;
 
     //variables
-    cv::Mat & _particles;
-    cv::Mat & _newParticles;
-    cv::Mat & _noise;
-    cv::Mat & _noise1; //lines from 0 to 2
-    cv::Mat & _noise2; //lines from 3 to 5
+    cv::Mat _particles;
+    cv::Mat _newParticles;
+    cv::Mat _noise;
+    cv::Mat _noise1; //lines from 0 to 2
+    cv::Mat _noise2; //lines from 3 to 5
 
 
     std_msgs::Time _rosTimestamp;
@@ -205,7 +205,7 @@ private:
     bool readMotionModelMatrix(cv::Mat & points, string fileName);
     bool computeTemplateHistogram(string imageFileName,string dataFileName); //I checked the output, it seems to work, but it seems as if in the old version the normalization didn't take effect.
     //bool computeHistogram(cv::Mat & uv, IplImage* transformedImage,  CvMatND* innerHistogramMat, double &usedInnerPoints, CvMatND* outerHistogramMat, double &usedOuterPoints);
-    bool computeHistogramFromRgbImage(cv::Mat & uv, IplImage *image,  CvMatND* innerHistogramMat, double &usedInnerPoints, CvMatND* outerHistogramMat, double &usedOuterPoints);
+    bool computeHistogramFromRgbImage(cv::Mat & uv, cv::Mat & image,  CvMatND* innerHistogramMat, double &usedInnerPoints, CvMatND* outerHistogramMat, double &usedOuterPoints);
     bool calculateLikelihood(CvMatND* templateHistogramMat, CvMatND* innerHistogramMat, CvMatND* outerHistogramMat, double inside_outside, double &likelihood);
     bool place3dPointsPerspective(cv::Mat & points, double x, double y, double z);
     int perspective_projection(cv::Mat & xyz, double fx, double fy, double cx, double cy, cv::Mat & uv);

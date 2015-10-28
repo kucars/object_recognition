@@ -221,21 +221,21 @@ bool PF3DTracker::open()
         quit =true;
     }
 
-    _model3dPointsMat=cvCreateMat(3, 2*nPixels, CV_64FC1);
+    _model3dPointsMat=cv::Mat(3, 2*nPixels, CV_64FC1);
     if(!_model3dPointsMat.data)
     {
         cout<<"PF3DTracker::open - I wasn\'t able to allocate memory for _model3dPointsMat.\n";
         fflush(stdout);
         quit =true;
     }
-    _points2Mat=cvCreateMat(3, 2*nPixels, CV_64FC1);
+    _points2Mat=cv::Mat(3, 2*nPixels, CV_64FC1);
     if(!_points2Mat.data)
     {
         cout<<"PF3DTracker::open - I wasn\'t able to allocate memory for _points2Mat.\n";
         fflush(stdout);
         quit =true;
     }
-    _tempMat=cvCreateMat(3, 2*nPixels, CV_64FC1);
+    _tempMat=cv::Mat(3, 2*nPixels, CV_64FC1);
     if(!_tempMat.data)
     {
         cout<<"PF3DTracker::open - I wasn\'t able to allocate memory for _tempMat.\n";
@@ -270,7 +270,7 @@ bool PF3DTracker::open()
     }
 
     //create _visualization3dPointsMat and fill it with the average between outer and inner 3D points.
-    _visualization3dPointsMat=cvCreateMat( 3, 2*nPixels, CV_64FC1 );
+    _visualization3dPointsMat=cv::Mat( 3, 2*nPixels, CV_64FC1 );
     //only the first half of this matrix is used. the second part can be full of rubbish (not zeros, I guess).
     _visualization3dPointsMat.setTo(cv::Scalar(1));
     for(row=0;row<3;row++)
@@ -293,51 +293,37 @@ bool PF3DTracker::open()
     }
 
     //allocate memory for the particles;
-    _particles=cvCreateMat(7,_nParticles,CV_64FC1);
+    _particles=cv::Mat(7,_nParticles,CV_64FC1);
     //fill the memory with zeros, so that valgrind won't complain.
     _particles.setTo(cv::Scalar(0));
 
     //define ways of accessing the particles:
-    _particles1 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles1, 1, _nParticles, CV_64FC1, _particles.data, _particles.step );
-    _particles2 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles2, 1, _nParticles, CV_64FC1, _particles.data + _particles.step*1, _particles.step );
-    _particles3 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles3, 1, _nParticles, CV_64FC1, _particles.data + _particles.step*2, _particles.step );
-    _particles4 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles4, 1, _nParticles, CV_64FC1, _particles.data + _particles.step*3, _particles.step );
-    _particles5 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles5, 1, _nParticles, CV_64FC1, _particles.data + _particles.step*4, _particles.step );
-    _particles6 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles6, 1, _nParticles, CV_64FC1, _particles.data + _particles.step*5, _particles.step );
-    _particles7 = cvCreateMatHeader( 1,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles7, 1, _nParticles, CV_64FC1, _particles.data + _particles.step*6, _particles.step );
-    _particles1to6 = cvCreateMatHeader( 6,_nParticles, CV_64FC1);
-    cvInitMatHeader( _particles1to6, 6, _nParticles, CV_64FC1, _particles.data, _particles.step );
-
-
+    _particles1=_particles(cv::Range(0,1), cv::Range::all());
+    _particles2=_particles(cv::Range(1,2), cv::Range::all());
+    _particles3=_particles(cv::Range(2,3), cv::Range::all());
+    _particles4=_particles(cv::Range(3,4), cv::Range::all());
+    _particles5=_particles(cv::Range(4,5), cv::Range::all());
+    _particles6=_particles(cv::Range(5,6), cv::Range::all());
+    _particles7=_particles(cv::Range(6,7), cv::Range::all());
+    _particles1to6=_particles(cv::Range(0,6), cv::Range::all());
     //allocate memory for the "new" particles;
-    _newParticles=cvCreateMat(7,_nParticles,CV_64FC1);
-    _newParticles1to6 = cvCreateMatHeader( 6,_nParticles, CV_64FC1);
-    cvInitMatHeader( _newParticles1to6, 6, _nParticles, CV_64FC1, _newParticles.data, _newParticles.step );
-
+    _newParticles=cv::Mat(7,_nParticles,CV_64FC1);
+    _newParticles1to6=_newParticles(cv::Range::all(), cv::Range::all());
     //allocate memory for "noise"
-    _noise=cvCreateMat(6,_nParticles,CV_64FC1);
-    cvSetZero(_noise);
-    _noise1 = cvCreateMatHeader( 3,_nParticles, CV_64FC1);
-    cvInitMatHeader( _noise1, 3, _nParticles, CV_64FC1, _noise.data, _noise.step );
-    cvSetZero(_noise1);
-    _noise2 = cvCreateMatHeader( 3,_nParticles, CV_64FC1);
-    cvInitMatHeader( _noise2, 3, _nParticles, CV_64FC1, _noise.data + _noise.step*3, _noise.step );
-    cvSetZero(_noise2);
+    _noise=cv::Mat(6,_nParticles,CV_64FC1);
+    _noise.setTo(cv::Scalar(0));
+    _noise1 = _noise(cv::Range(0,3), cv::Range::all());
+    _noise2 = _noise(cv::Range(3,6), cv::Range::all());
+    _noise1.setTo(cv::Scalar(0));
+    _noise2.setTo(cv::Scalar(0));
 
     //resampling-related stuff.
-    _nChildren = cvCreateMat(1,_nParticles,CV_64FC1);
-    _label     = cvCreateMat(1,_nParticles,CV_64FC1);
-    _ramp      = cvCreateMat(1,_nParticles,CV_64FC1);
-    _u         = cvCreateMat(1,_nParticles,CV_64FC1);
+    _nChildren = cv::Mat(1,_nParticles,CV_64FC1);
+    _label     = cv::Mat(1,_nParticles,CV_64FC1);
+    _ramp      = cv::Mat(1,_nParticles,CV_64FC1);
+    _u         = cv::Mat(1,_nParticles,CV_64FC1);
 
-    _cumWeight =cvCreateMat(1,_nParticles+1,CV_64FC1);
+    _cumWeight =cv::Mat(1,_nParticles+1,CV_64FC1);
 
     int count;
     for(count=0;count<_nParticles;count++)
@@ -360,20 +346,24 @@ bool PF3DTracker::open()
 
         //initialize X
         mean=(double)_initialX;
-        cvRandArr( &rngState, _particles1, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
+        cv::randn(_particles1, cv::Scalar(mean), cv::Scalar(_accelStDev));
         //initialize Y
         mean=(double)_initialY;
-        cvRandArr( &rngState, _particles2, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
+        cv::randn(_particles2, cv::Scalar(mean), cv::Scalar(_accelStDev));
         //initialize Z
         mean=(double)_initialZ;
-        cvRandArr( &rngState, _particles3, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
+        cv::randn(_particles3, cv::Scalar(mean), cv::Scalar(_accelStDev));
+
         //initialize VX
         mean=0;
-        cvRandArr( &rngState, _particles4, CV_RAND_NORMAL, cvScalar(mean), cvScalar(velocityStDev));
+        cv::randn(_particles4, cv::Scalar(mean), cv::Scalar(velocityStDev));
+
         //initialize VY
-        cvRandArr( &rngState, _particles5, CV_RAND_NORMAL, cvScalar(mean), cvScalar(velocityStDev));
+        cv::randn(_particles5, cv::Scalar(mean), cv::Scalar(velocityStDev));
+
         //initialize VZ
-        cvRandArr( &rngState, _particles6, CV_RAND_NORMAL, cvScalar(mean), cvScalar(velocityStDev));
+        cv::randn(_particles6, cv::Scalar(mean), cv::Scalar(velocityStDev));
+
     }
 
     downsampler=0; //this thing is used to send less data to the plotter TODO remove
@@ -381,26 +371,19 @@ bool PF3DTracker::open()
 
     //Matrices-related stuff.
     //connect headers to data, allocate space...
-    _rzMat = cvCreateMat(3, 3, CV_64FC1);
-    _ryMat = cvCreateMat(3, 3, CV_64FC1);
-    _uv = cvCreateMat(2,2*nPixels, CV_64FC1);
+    _rzMat = cv::Mat(3, 3, CV_64FC1);
+    _ryMat = cv::Mat(3, 3, CV_64FC1);
+    _uv = cv::Mat(2,2*nPixels, CV_64FC1);
 
-    _tempMat1 = cvCreateMatHeader( 1,2*nPixels, CV_64FC1);
-    cvInitMatHeader( _tempMat1, 1, 2*nPixels, CV_64FC1,_tempMat.data, _tempMat.step );
+    _tempMat1=_tempMat(cv::Range(0,1), cv::Range::all());
+    _tempMat2=_tempMat(cv::Range(1,2), cv::Range::all());
+    _tempMat3=_tempMat(cv::Range(2,3), cv::Range::all());
 
-    _tempMat2 = cvCreateMatHeader( 1,2*nPixels, CV_64FC1);
-    cvInitMatHeader( _tempMat2, 1, 2*nPixels, CV_64FC1, _tempMat.data+_tempMat.step*1, _tempMat.step ); //FUNZIONA? ??? !!!
+    _p2Mat1=_points2Mat(cv::Range(0,1),cv::Range::all());
+    _p2Mat3=_points2Mat(cv::Range(2,3),cv::Range::all());
 
-    _tempMat3 = cvCreateMatHeader( 1,2*nPixels, CV_64FC1);
-    cvInitMatHeader( _tempMat3, 1, 2*nPixels, CV_64FC1, _tempMat.data+_tempMat.step*2, _tempMat.step ); //FUNZIONA? ??? !!!
-
-    _p2Mat1 = cvCreateMatHeader( 1,2*nPixels, CV_64FC1);
-    cvInitMatHeader( _p2Mat1, 1, 2*nPixels, CV_64FC1, _points2Mat.data ); //FUNZIONA? ??? !!!
-    _p2Mat3 = cvCreateMatHeader( 1,2*nPixels, CV_64FC1);
-    cvInitMatHeader( _p2Mat3, 1, 2*nPixels, CV_64FC1, _points2Mat.data+_points2Mat.step*2, _points2Mat.step ); //FUNZIONA? ??? !!!
-
-    _drawingMat=cvCreateMat(3, 2*nPixels, CV_64FC1);
-    _projectionMat=cvCreateMat(2, 3, CV_64FC1);
+    _drawingMat=cv::Mat(3, 2*nPixels, CV_64FC1);
+    _projectionMat=cv::Mat(2, 3, CV_64FC1);
 
     _xyzMat1 = cvCreateMatHeader(1,2*nPixels,CV_64FC1);
     _xyzMat2 = cvCreateMatHeader(1,2*nPixels,CV_64FC1);
@@ -551,7 +534,7 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
     {
         evaluateHypothesisPerspectiveFromRgbImage(_model3dPointsMat,(double)cvmGet(_particles,0,count),(double)cvmGet(_particles,1,count),(double)cvmGet(_particles,2,count),_modelHistogramMat,_rawImage,_perspectiveFx,_perspectiveFy, _perspectiveCx,_perspectiveCy,_insideOutsideDifferenceWeight,likelihood);
 
-        cvmSet(_particles,6,count,likelihood);
+        _particles.at<double>(6,count)=likelihood;
         sumLikelihood+=likelihood;
         if(likelihood>maxLikelihood)
         {
@@ -563,9 +546,9 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
     
     if(maxIndex!=-1)
     {
-        maxX=(double)cvmGet(_particles,0,maxIndex);
-        maxY=(double)cvmGet(_particles,1,maxIndex);
-        maxZ=(double)cvmGet(_particles,2,maxIndex);
+        maxX=(double)_particles.at<double>(0,maxIndex);
+        maxY=(double)_particles.at<double>(1,maxIndex);
+        maxZ=(double)_particles.at<double>(2,maxIndex);
     }
     else
     {
@@ -602,29 +585,33 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
         velocityStDev=0; //warning ??? !!! I'm setting parameters for the dynamic model here.
 
         mean=(double)_initialX;
-        cvRandArr( &rngState, _particles1, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
+        cv::randn(_particles1, cv::Scalar(mean), cv::Scalar(_accelStDev));
+
         //initialize Y
         mean=(double)_initialY;
-        cvRandArr( &rngState, _particles2, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
+        cv::randn(_particles2, cv::Scalar(mean), cv::Scalar(_accelStDev));
+
         //initialize Z
         mean=(double)_initialZ;
-        cvRandArr( &rngState, _particles3, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
+        cv::randn(_particles3, cv::Scalar(mean), cv::Scalar(_accelStDev));
+
         //initialize VX
         mean=0;
-        cvRandArr( &rngState, _particles4, CV_RAND_NORMAL, cvScalar(mean), cvScalar(velocityStDev));
+        cv::randn(_particles4, cv::Scalar(mean), cv::Scalar(velocityStDev));
         //initialize VY
-        cvRandArr( &rngState, _particles5, CV_RAND_NORMAL, cvScalar(mean), cvScalar(velocityStDev));
+        cv::randn(_particles5, cv::Scalar(mean), cv::Scalar(velocityStDev));
         //initialize VZ
-        cvRandArr( &rngState, _particles6, CV_RAND_NORMAL, cvScalar(mean), cvScalar(velocityStDev));
+        cv::randn(_particles6, cv::Scalar(mean), cv::Scalar(velocityStDev));
 
         _framesNotTracking=0;
 
         weightedMeanX=weightedMeanY=weightedMeanZ=0.0;    // UGO: they should be zeroed before accumulation
         for(count=0;count<_nParticles;count++)
         {
-            weightedMeanX+=(double)cvmGet(_particles,0,count);
-            weightedMeanY+=(double)cvmGet(_particles,1,count);
-            weightedMeanZ+=(double)cvmGet(_particles,2,count);
+
+            weightedMeanX+=(double)_particles.at<double>(0,count);
+            weightedMeanY+=(double)_particles.at<double>(1,count);
+            weightedMeanZ+=(double)_particles.at<double>(2,count);
         }
         weightedMeanX/=_nParticles;
         weightedMeanY/=_nParticles;
@@ -653,10 +640,10 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
         weightedMeanZ=0.0;
         for(count=0;count<_nParticles;count++)
         {
-            cvmSet(_particles,6,count,(cvmGet(_particles,6,count)/sumLikelihood));
-            weightedMeanX+=(double)(cvmGet(_particles,0,count)*cvmGet(_particles,6,count));
-            weightedMeanY+=(double)(cvmGet(_particles,1,count)*cvmGet(_particles,6,count));
-            weightedMeanZ+=(double)(cvmGet(_particles,2,count)*cvmGet(_particles,6,count));
+            _particles.at<double>(6,count)=_particles.at<double>(6,count)/sumLikelihood;
+            weightedMeanX+=(double)_particles.at<double>(0,count)*_particles.at<double>(6,count);
+            weightedMeanY+=(double)_particles.at<double>(1,count)*_particles.at<double>(6,count);
+            weightedMeanZ+=(double)_particles.at<double>(2,count)*_particles.at<double>(6,count);
         }
 
 
@@ -704,7 +691,8 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
             //TODO:CHECK that copying the whole thing creates no problems.
             //I think I used to copy only 6 lines to make it faster.
             //Copy(&_particles[0][0], &_newParticles[0][0], 6*_nParticles);
-            cvCopy(_particles,_newParticles);
+            _particles.copyTo(_newParticles);
+            //cvCopy(_particles,_newParticles);
         }
 
         //cout<<"after resampling\n";
@@ -741,10 +729,10 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
         mean = 0;
         //cout<<"Noise generation parameters: mean= "<<mean<<", accelStDev= "<<_accelStDev<<endl;
         //cout<<"_noise1 before generation: "<<((double*)(_noise1.data + _noise.step*0))[0]<<endl;
-        cvRandArr( &rngState, _noise1, CV_RAND_NORMAL, cvScalar(mean), cvScalar(_accelStDev));
-        //cout<<"_noise1 after generation: "<<((double*)(_noise1.data + _noise.step*0))[0]<<endl;
+        cv::randn(_noise1, cv::Scalar(mean), cv::Scalar(_accelStDev));
 
-        cvCopy(_noise1,_noise2);
+        //cout<<"_noise1 after generation: "<<((double*)(_noise1.data + _noise.step*0))[0]<<endl;
+        _noise1.copyTo(_noise2);
         cvConvertScale( _noise1, _noise1, 0.5, 0 );//influence on the position is half that on speed.
         //cout<<"_noise1 after rescaling: "<<((double*)(_noise1.data + _noise.step*0))[0]<<endl;
 
@@ -854,9 +842,9 @@ PF3DTracker::~PF3DTracker()
 bool PF3DTracker::close()
 {
 
-    cvReleaseMat(&_A);
-    cvReleaseMat(&_particles);
-    cvReleaseMat(&_newParticles);
+    //cvReleaseMat(&_A);
+    //cvReleaseMat(&_particles);
+    //cvReleaseMat(&_newParticles);
 
     return true;
 }
@@ -874,7 +862,7 @@ void PF3DTracker::drawContourPerspective(cv::Mat & model3dPointsMat,double x, do
     //cv::Mat & uv=cvCreateMat(2,2*nPixels,CV_64FC1);
 
     //create a copy of the 3D original points.
-    cvCopy(model3dPointsMat,_drawingMat);
+    model3dPointsMat.copyTo(_drawingMat);
 
 
     //****************************
@@ -1157,7 +1145,7 @@ bool PF3DTracker::evaluateHypothesisPerspectiveFromRgbImage(cv::Mat & model3dPoi
     double usedOuterPoints, usedInnerPoints;
 
     //create a copy of the 3D original points.
-    cvCopy(model3dPointsMat,_drawingMat);
+    model3dPointsMat.copyTo(_drawingMat);
 
     //****************************
     //ROTOTRANSLATE THE 3D POINTS.
@@ -1360,7 +1348,7 @@ bool PF3DTracker::place3dPointsPerspective(cv::Mat & points, double x, double y,
     //Multiply Ry by points
     //_points2Mat=_ryMat*points     [3 x 2*nPixels]
     cvMatMul(_ryMat,points,_points2Mat);
-    
+
 
     //used to be:
     /*
@@ -1381,7 +1369,7 @@ bool PF3DTracker::place3dPointsPerspective(cv::Mat & points, double x, double y,
     // 2. Apply a vertical and horizontal shift
     //*****************************************
     //sum floorDistance to all the elements in the first row of "points2".
-    cvSet(_tempMat1,cvScalar(floorDistance)); //set all elements of _tempMat1 to the value of "floorDistance"
+    _tempMat1.setTo(cv::Scalar(floorDistance)); //set all elements of _tempMat1 to the value of "floorDistance"
     cvAdd(_p2Mat1,_tempMat1,_p2Mat1);         //_p2Mat1=_p2Mat1+_tempMat1.
 
     //used to be:
@@ -1395,7 +1383,7 @@ bool PF3DTracker::place3dPointsPerspective(cv::Mat & points, double x, double y,
 
 
     //sum z to the third row of "points2".
-    cvSet(_tempMat3,cvScalar(z)); //set all elements of _tempMat3 to the value of "z"
+    _tempMat3.setTo(cv::Scalar(z)); //set all elements of _tempMat3 to the value of "z"
     cvAdd(_p2Mat3,_tempMat3,_p2Mat3);         //_p2Mat3=_p2Mat3+_tempMat3.
 
     //used to be:
@@ -1507,7 +1495,7 @@ int PF3DTracker::perspective_projection(cv::Mat & xyz, double fx, double fy, dou
     //     cout<<"\n";
 
     //set all elements of Z to 1.
-    cvSet(_xyzMat3,(cvScalar(1)));
+    _xyzMat3.setTo(cv::Scalar(1));
 
     //     for(a=0;a<3;a++)
     //     {
@@ -1542,7 +1530,7 @@ int PF3DTracker::perspective_projection(cv::Mat & xyz, double fx, double fy, dou
 
 
 
-bool PF3DTracker::computeHistogramFromRgbImage(cv::Mat & uv, IplImage *image,  CvMatND* innerHistogramMat, double &usedInnerPoints, CvMatND* outerHistogramMat, double &usedOuterPoints)
+bool PF3DTracker::computeHistogramFromRgbImage(cv::Mat & uv, cv::Mat & image,  CvMatND* innerHistogramMat, double &usedInnerPoints, CvMatND* outerHistogramMat, double &usedOuterPoints)
 {
     //This should cross the R and B channels
     int count;
