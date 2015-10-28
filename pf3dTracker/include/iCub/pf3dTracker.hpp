@@ -179,7 +179,7 @@ private:
 
 
     //sensor_msgs::CvBridge bridge_;
-    IplImage *frame;
+    cv::Mat frame;
 
     cv_bridge::CvImageConstPtr _rosImage;
     cv::Mat _rawImage;
@@ -209,7 +209,7 @@ private:
     bool calculateLikelihood(CvMatND* templateHistogramMat, CvMatND* innerHistogramMat, CvMatND* outerHistogramMat, double inside_outside, double &likelihood);
     bool place3dPointsPerspective(cv::Mat & points, double x, double y, double z);
     int perspective_projection(cv::Mat & xyz, double fx, double fy, double cx, double cy, cv::Mat & uv);
-    void drawContourPerspective(cv::Mat & model3dPointsMat,double x, double y, double z, IplImage * image, double _perspectiveFx,double  _perspectiveFy ,double _perspectiveCx,double  _perspectiveCy ,int R, int G, int B, double &meanU, double &meanV);
+    void drawContourPerspective(cv::Mat & model3dPointsMat,double x, double y, double z, cv::Mat & image, double _perspectiveFx,double  _perspectiveFy ,double _perspectiveCx,double  _perspectiveCy ,int R, int G, int B, double &meanU, double &meanV);
     void drawSampledLinesPerspective(cv::Mat & model3dPointsMat, double x, double y, double z, cv::Mat & image,double _perspectiveFx,double  _perspectiveFy ,double _perspectiveCx,double  _perspectiveCy ,int R, int G, int B, double &meanU, double &meanV);
 
     //bool evaluateHypothesisPerspective(cv::Mat & model3dPointsMat, double x, double y, double z, CvMatND* modelHistogramMat, IplImage* transformedImage, double fx, double fy, double u0, double v0, double, double &likelihood);

@@ -449,13 +449,14 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
     double wholeCycle;
     string outputFileName;
     stringstream out;
-    IplImage *rawImageBGR;
+    cv::Mat rawImageBGR;
 
     seed=rand();
     
     if(_staticImageTest)
     {
-        if( (rawImageBGR = cvLoadImage( "testImage.png", 1)) == 0 ) //load the image from file.
+        rawImageBGR = cv::imread( "testImage.png", 1) ;
+        if( rawImageBGR.data == 0 ) //load the image from file.
         {
             std::cout << "Tried to open testImage.png"<<std::endl;
             cout<<"I wasn't able to open the test image file!\n";
@@ -532,7 +533,8 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
     int   maxIndex=-1;
     for(count=0;count< _nParticles;count++)
     {
-        evaluateHypothesisPerspectiveFromRgbImage(_model3dPointsMat,(double)cvmGet(_particles,0,count),(double)cvmGet(_particles,1,count),(double)cvmGet(_particles,2,count),_modelHistogramMat,_rawImage,_perspectiveFx,_perspectiveFy, _perspectiveCx,_perspectiveCy,_insideOutsideDifferenceWeight,likelihood);
+
+        evaluateHypothesisPerspectiveFromRgbImage(_model3dPointsMat,(double)_particles.at<double>(0,count),(double)_particles.at<double>(1,count),(double)_particles.at<double>(2,count),_modelHistogramMat,_rawImage,_perspectiveFx,_perspectiveFy, _perspectiveCx,_perspectiveCy,_insideOutsideDifferenceWeight,likelihood);
 
         _particles.at<double>(6,count)=likelihood;
         sumLikelihood+=likelihood;
@@ -720,7 +722,7 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
         //******************************************
         //APPLY THE MOTION MODEL: 1.APPLY THE MATRIX
         //******************************************
-        cvMatMul(_A,_newParticles,_particles);
+        cv::multiply(_A,_newParticles,_particles);
 
         //the "good" particles now are in _particles
         //********************************************************
@@ -733,13 +735,14 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
 
         //cout<<"_noise1 after generation: "<<((double*)(_noise1.data + _noise.step*0))[0]<<endl;
         _noise1.copyTo(_noise2);
-        cvConvertScale( _noise1, _noise1, 0.5, 0 );//influence on the position is half that on speed.
+        //cvConvertScale( _noise1, _noise1, 0.5, 0 );//influence on the position is half that on speed.
+        _noise1*=0.5;
         //cout<<"_noise1 after rescaling: "<<((double*)(_noise1.data + _noise.step*0))[0]<<endl;
 
         //cout<<"_noise2 after generation: "<<((double*)(_noise2.data + _noise.step*0))[0]<<endl;
 
         //cout<<"First element of _particles before addition of noise: "<<((double*)(_particles.data + _particles.step*0))[0]<<endl;
-        cvAdd(_particles1to6,_noise,_particles1to6);//sum the influence of the noise to the previous status
+        cv::add(_particles1to6,_noise,_particles1to6);//sum the influence of the noise to the previous status
         //cout<<"First element of _particles after addition of noise: "<<((double*)(_particles.data + _particles.step*0))[0]<<endl;
 
 
@@ -816,8 +819,7 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
 
     if(_staticImageTest)
     {
-        cvSaveImage("testImageOutput.png", _rawImage);
-        cvReleaseImage(&rawImageBGR);
+        cv::imwrite("testImageOutput.png", _rawImage);
         ros::shutdown(); //exit the program after just one cycle
     }
     //cvReleaseImage(&_rawImage);
@@ -853,7 +855,7 @@ bool PF3DTracker::close()
 
 
 
-void PF3DTracker::drawContourPerspective(cv::Mat & model3dPointsMat,double x, double y, double z, IplImage * image, double _perspectiveFx,double  _perspectiveFy ,double _perspectiveCx,double  _perspectiveCy ,int R, int G, int B, double &meanU, double &meanV)
+void PF3DTracker::drawContourPerspective(cv::Mat & model3dPointsMat,double x, double y, double z, cv::Mat & image, double _perspectiveFx,double  _perspectiveFy ,double _perspectiveCx,double  _perspectiveCy ,int R, int G, int B, double &meanU, double &meanV)
 {
 
     //IplImage image =cv_ptr->image;
@@ -1002,7 +1004,7 @@ bool PF3DTracker::computeTemplateHistogram(string imageFileName,string dataFileN
                 //TEST printf("histogram->size[0].step,%d\n",histogram->dim[0].step);  256
                 //TEST printf("histogram->size[1].step,%d\n",histogram->dim[1].step);   32
                 //TEST printf("histogram->size[2].step,%d\n",histogram->dim[2].step);    4
-                *((double*)(histogram.data + a*histogram->dim[0].step + b*histogram->dim[1].step + c*histogram->dim[2].step)) +=1;
+                *((double*)(histogram->data + a*histogram->dim[0].step + b*histogram->dim[1].step + c*histogram->dim[2].step)) +=1;
 
                 //initial pointer + Y*UBINS*VBINS*histogram.step + U*VBINS*histogram.step + V*histogram.step. RIGHT?
                 //histogram[(yuvBinsImage[u][v][0])*UBins*VBins + (yuvBinsImage[u][v][1])*VBins +  (yuvBinsImage[u][v][2]) ]+=1; //increment the correct bin counter.
@@ -1045,12 +1047,8 @@ bool PF3DTracker::computeTemplateHistogram(string imageFileName,string dataFileN
 
     //clean memory up
     cvReleaseMatND(&histogram);
-    cvReleaseImage(&rawImage);
-    cvReleaseImage(&rawImageRGB);
-    //cvReleaseImage(&transformedImage);
 
     return false;
-
 }
 
 bool PF3DTracker::readModelHistogram(CvMatND* histogram,const char fileName[])
@@ -1347,7 +1345,7 @@ bool PF3DTracker::place3dPointsPerspective(cv::Mat & points, double x, double y,
     //***********************************
     //Multiply Ry by points
     //_points2Mat=_ryMat*points     [3 x 2*nPixels]
-    cvMatMul(_ryMat,points,_points2Mat);
+    cv::multiply(_ryMat,points,_points2Mat);
 
 
     //used to be:
@@ -1370,7 +1368,7 @@ bool PF3DTracker::place3dPointsPerspective(cv::Mat & points, double x, double y,
     //*****************************************
     //sum floorDistance to all the elements in the first row of "points2".
     _tempMat1.setTo(cv::Scalar(floorDistance)); //set all elements of _tempMat1 to the value of "floorDistance"
-    cvAdd(_p2Mat1,_tempMat1,_p2Mat1);         //_p2Mat1=_p2Mat1+_tempMat1.
+    cv::add(_p2Mat1,_tempMat1,_p2Mat1);         //_p2Mat1=_p2Mat1+_tempMat1.
 
     //used to be:
     //     ippsAddC_32f_I(floorDistance,points2,pointsColumns);
@@ -1384,7 +1382,7 @@ bool PF3DTracker::place3dPointsPerspective(cv::Mat & points, double x, double y,
 
     //sum z to the third row of "points2".
     _tempMat3.setTo(cv::Scalar(z)); //set all elements of _tempMat3 to the value of "z"
-    cvAdd(_p2Mat3,_tempMat3,_p2Mat3);         //_p2Mat3=_p2Mat3+_tempMat3.
+    cv::add(_p2Mat3,_tempMat3,_p2Mat3);         //_p2Mat3=_p2Mat3+_tempMat3.
 
     //used to be:
     /*
@@ -1404,7 +1402,7 @@ bool PF3DTracker::place3dPointsPerspective(cv::Mat & points, double x, double y,
     //**********************************
     //Multiply RZ by "points2", put the result in "points"
     //points=_rzMat*_points2Mat     [3 x 2*nPixels]
-    cvMatMul(_rzMat,_points2Mat,points);
+    cv::multiply(_rzMat,_points2Mat,points);
 
 
     //used to be:
@@ -1462,12 +1460,14 @@ int PF3DTracker::perspective_projection(cv::Mat & xyz, double fx, double fy, dou
     //#####################################################
     //setup
 
-    cvInitMatHeader( _xyzMat1, 1, 2*nPixels, CV_64FC1, xyz.data );
-    cvInitMatHeader( _xyzMat2, 1, 2*nPixels, CV_64FC1, xyz.data + xyz.step*1);
-    cvInitMatHeader( _xyzMat3, 1, 2*nPixels, CV_64FC1, xyz.data + xyz.step*2);
+    _xyzMat1=xyz(cv::Range(0,1), cv::Range::all());
+    _xyzMat2=xyz(cv::Range(1,2), cv::Range::all());
+    _xyzMat3=xyz(cv::Range(2,3), cv::Range::all());
+
+
 
     //divide X (the first line of xyz) by Z (the third line of xyz).
-    cvDiv( _xyzMat1, _xyzMat3, _xyzMat1, 1 );
+    cv::divide( _xyzMat1, _xyzMat3, _xyzMat1, 1 );
 
     //     for(a=0;a<3;a++)
     //     {
@@ -1481,7 +1481,7 @@ int PF3DTracker::perspective_projection(cv::Mat & xyz, double fx, double fy, dou
     //     cout<<"\n";
 
     //divide Y (the second line of xyz) by Z (the third line of xyz).
-    cvDiv( _xyzMat2, _xyzMat3, _xyzMat2, 1 );
+    cv::divide( _xyzMat2, _xyzMat3, _xyzMat2, 1 );
 
     //     for(a=0;a<3;a++)
     //     {
