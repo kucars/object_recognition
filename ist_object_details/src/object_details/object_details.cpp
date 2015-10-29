@@ -1859,6 +1859,12 @@ bool ObjectDetails::findHandle(PointCloudInPtr point_cloud, PointCloudInPtr poin
 		}
 		p=point_cloud->erase(p);
 	}
+
+	if(handle_point_cloud->size()==0)
+	{
+		has_handle=false;
+		return false;
+	}
 	std::cout << "handle cloud size: " << handle_point_cloud->size() << std::endl;
 	std::cout << "core cloud size: " << core_point_cloud->size() << std::endl;
 	/*boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 = viewportsVis(core_point_cloud);

@@ -6,6 +6,7 @@ project(ist_object_details)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS roscpp pcl_ros eigen_conversions tf_conversions tf perception_msgs std_srvs)
 
+find_package(cmake_modules REQUIRED)
 find_package(Boost REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen REQUIRED)

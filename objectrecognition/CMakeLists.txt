@@ -21,7 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_msgs
   shape_msgs
 )
-
+find_package(cmake_modules REQUIRED)
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(PCL REQUIRED)

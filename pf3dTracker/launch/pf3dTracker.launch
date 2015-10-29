@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+  	<arg name="image_in" default="/vizzy/l_camera/image_raw"/>
+	<node pkg="pf3d_tracker" name="pf3d_tracker" type="pf3d_tracker_node"  output="screen">
+		<!-- load the parameters -->
+    		<param name="models_folder" value="$(find pf3d_tracker)/models/" />
+		<rosparam command="load" file="$(find pf3d_tracker)/config/parameters.yaml"/>
+    		<remap from="image_in" to="$(arg image_in)"/>
+	</node> 
+</launch>
+
+

@@ -115,6 +115,9 @@ RosObjectDetails::RosObjectDetails(ros::NodeHandle n_) : object_detected(false),
     n_priv.param<std::string>("table_frame_id", table_frame_id, "/table_frame");
     ROS_INFO("table frame id: %s", table_frame_id.c_str());
 
+    n_priv.param<std::string>("camera_frame_id", camera_frame_id, "/openni_rgb_frame");
+    ROS_INFO("camera frame id: %s", camera_frame_id.c_str());
+
     ObjectDetails::setRemoveOutliers(remove_outliers);
     ObjectDetails::setObjectTypeThreshold(object_type_threshold);
     ObjectDetails::setObjectPartsThreshold(object_parts_threshold);
@@ -226,8 +229,8 @@ bool RosObjectDetails::refinePointCloudServiceCallback(perception_msgs::GetRefin
     try
     {
         ROS_INFO_STREAM("FRAME_ID:" << req.point_cloud.header.frame_id);
-        listener.waitForTransform(req.point_cloud.header.frame_id, "/openni_rgb_frame", ros::Time(0), ros::Duration(5.0));
-        listener.lookupTransform(req.point_cloud.header.frame_id, "/openni_rgb_frame", ros::Time(0),  camera_transform);
+        listener.waitForTransform(req.point_cloud.header.frame_id, camera_frame_id, ros::Time(0), ros::Duration(5.0));
+        listener.lookupTransform(req.point_cloud.header.frame_id, camera_frame_id, ros::Time(0),  camera_transform);
     }
     catch (tf::TransformException ex)
     {
@@ -276,8 +279,9 @@ bool RosObjectDetails::refinePointCloudServiceCallback(perception_msgs::GetRefin
     pcl::toROSMsg(*pcl_point_cloud_transformed,ros_point_cloud2);
     ros_point_cloud2.header.frame_id=req.point_cloud.header.frame_id;
     ros_point_cloud2.header.stamp=ros::Time::now();
-    sensor_msgs::convertPointCloud2ToPointCloud(ros_point_cloud2,ros_point_cloud);
-    res.point_cloud=ros_point_cloud;
+    //sensor_msgs::convertPointCloud2ToPointCloud(ros_point_cloud2,ros_point_cloud);
+    //res.point_cloud=ros_point_cloud;
+    res.point_cloud=ros_point_cloud2;
     // See in rviz
     rviz_point_cloud.header.frame_id=req.table.pose.header.frame_id;
     pcl_point_cloud_transformed->header=rviz_point_cloud.header;
@@ -296,8 +300,9 @@ bool RosObjectDetails::refinePointCloudServiceCallback(perception_msgs::GetRefin
     pcl::toROSMsg(*pcl_point_cloud_transformed,ros_point_cloud2);
     ros_point_cloud2.header.frame_id=req.point_cloud.header.frame_id;
     ros_point_cloud2.header.stamp=ros::Time::now();
-    sensor_msgs::convertPointCloud2ToPointCloud(ros_point_cloud2, ros_point_cloud);
-    res.point_cloud_object_details=ros_point_cloud;
+    //sensor_msgs::convertPointCloud2ToPointCloud(ros_point_cloud2, ros_point_cloud);
+    //res.point_cloud_object_details=ros_point_cloud;
+    res.point_cloud_object_details=ros_point_cloud2;
 
     std::cout << "size out: " << ros_point_cloud.points.size() << std::endl;
 

@@ -61,6 +61,8 @@
   <run_depend>moveit_msgs</run_depend>
   <run_depend>shape_msgs</run_depend>
 
+  <build_depend>cmake_modules</build_depend>
+  <run_depend>cmake_modules</run_depend>
   <!-- <depend package="orca_proxy"/>-->
   <export>
 	<!--<cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -L${prefix}/lib -Wl,-rpath,${prefix}/lib -lobjectrecognition_sv -lobjectrecognition_si"/>-->

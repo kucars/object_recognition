@@ -17,14 +17,12 @@ def perception_client():
 	table_region=tabletop_object_segmentation_online.msg.TableRegion() 
 
 	#UPPER SHELF
-	table_region.x_filter_min=0.6
-	table_region.x_filter_max=1.0
-
-	table_region.y_filter_min=-0.4
-	table_region.y_filter_max=0.4
-
-	table_region.z_filter_min=-0.1
-	table_region.z_filter_max=0.3
+  	table_region.x_filter_max=1.0
+  	table_region.x_filter_min=-1.0
+  	table_region.y_filter_max=1
+  	table_region.y_filter_min=-1
+  	table_region.z_filter_max=3.0
+  	table_region.z_filter_min=0.1
 
 	
 
@@ -50,7 +48,7 @@ if __name__ == '__main__':
         # Initializes a rospy node so that the SimpleActionClient can
         # publish and subscribe over ROS.
         rospy.init_node('detect_object_clusters_client')
-	while rospy.is_shutdown()==False:
-          perception_client()
+	#while rospy.is_shutdown()==False:
+        perception_client()
     except rospy.ROSInterruptException:
         print "program interrupted before completion"

@@ -19,7 +19,7 @@ find_package(catkin COMPONENTS
         pcl_conversions
         ${MSG_DEPS}
         REQUIRED)
-
+find_package(cmake_modules REQUIRED)
 find_package(Eigen REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL REQUIRED)
