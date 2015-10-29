@@ -2,7 +2,7 @@
 // Get rid of the hardcoding of the position of initialization files
 // Fix time measurement operations
 
-
+// ROS Wrapper by Rui Figueiredo
 /**
 *
 * Library of the 3d position tracker implementing the particle filter.
@@ -94,7 +94,42 @@ void printMat(const cv::Mat & A);
 
 
 //constructor
-PF3DTracker::PF3DTracker(ros::NodeHandle n): n_(n), it_(n), n_priv("~") 
+PF3DTracker::PF3DTracker(const int & __nParticles,
+                         const double & __accelStdDev,
+                         const double & __insideOutsideDifferenceWeight,
+                         const double & __likelihoodThreshold,
+                         const std::string & __trackedObjectColorTemplate,
+                         const std::string & __trackedObjectShapeTemplate,
+                         const std::string & __motionModelMatrix,
+                         const std::string & __dataFileName,
+                         const std::string & __initializationMethod,
+                         const double & __initialX,
+                         const double & __initialY,
+                         const double & __initialZ,
+                         const int & __calibrationImageWidth,
+                         const int & __calibrationImageHeight,
+                         const double & __perspectiveFx,
+                         const double & __perspectiveFy,
+                         const double & __perspectiveCx,
+                         const double & __perspectiveCy):
+    _nParticles(__nParticles),
+    accelStdDev(__accelStdDev),
+    _insideOutsideDifferenceWeight(__insideOutsideDifferenceWeight),
+    _likelihoodThreshold(__likelihoodThreshold),
+    trackedObjectColorTemplate(__trackedObjectColorTemplate),
+    trackedObjectShapeTemplate(__trackedObjectShapeTemplate),
+    motionModelMatrix(__motionModelMatrix),
+    dataFileName(__dataFileName),
+    _initializationMethod(__initializationMethod),
+    _initialX(__initialX),
+    _initialY(__initialY),
+    _initialZ(__initialZ),
+    _calibrationImageWidth(__calibrationImageWidth),
+    _calibrationImageHeight(__calibrationImageHeight),
+    _perspectiveFx(__perspectiveFx),
+    _perspectiveFy(__perspectiveFy),
+    _perspectiveCx(__perspectiveCx),
+    _perspectiveCy(__perspectiveCy)
 {
     _staticImageTest = false;
 
@@ -104,9 +139,7 @@ PF3DTracker::PF3DTracker(ros::NodeHandle n): n_(n), it_(n), n_priv("~")
     if(!setUpDoneCorrectly)
     {
         cout<<"Set up of pf3dTracker failed."<<endl;
-        ros::shutdown();
     }
-
 }
 
 
@@ -119,10 +152,7 @@ bool PF3DTracker::open()
 
     bool failure;
     bool quit;
-    string trackedObjectColorTemplate;
-    string dataFileName;
-    string trackedObjectShapeTemplate;
-    string motionModelMatrix;
+
     string temp;
     int row, column;
 
@@ -134,56 +164,7 @@ bool PF3DTracker::open()
     // Set some parameters that are no longer used and should be removed TODO
     _colorTransfPolicy=1;
 
-    
-    
-    //***********************************************
-    // Read parameters from the initialization file *
-    //***********************************************
-    //Topics
-    n_priv.param<std::string>("inputVideoPort",  _inputVideoPortName,  "/camera/rgb/image_color");
-    n_priv.param<std::string>("outputVideoPort", _outputVideoPortName, "/pf3dTracker/video_o");
-    n_priv.param<std::string>("outputDataPort",  _outputDataPortName,  "/pf3dTracker/data_o");
-    
-    //Parameters for the algorithm
-    n_priv.param<int>("nParticles", _nParticles, 900); //TODO set it back to 900
-    n_priv.param<double>("accelStDev", _accelStDev, 30.0); //TODO set it back to 30
-    n_priv.param<double>("insideOutsideDiffWeight", _insideOutsideDifferenceWeight, 1.5);
-    n_priv.param<double>("likelihoodThreshold", _likelihoodThreshold, 0.005);//.005); TODO ser it back to 0.005
 
-    n_priv.param<std::string>("trackedObjectColorTemplate", trackedObjectColorTemplate, "/home/vislab/repositories/ros/object_recognition/pf3dTracker/models/red_ball_iit.bmp");
-    n_priv.param<std::string>("trackedObjectShapeTemplate", trackedObjectShapeTemplate, "/home/vislab/repositories/ros/object_recognition/pf3dTracker/models/initial_ball_points_smiley_31mm_20percent.csv");
-    n_priv.param<std::string>("motionModelMatrix", motionModelMatrix, "/home/vislab/repositories/ros/object_recognition/pf3dTracker/models/motion_model_matrix.csv");
-    n_priv.param<std::string>("trackedObjectTemp", dataFileName, "current_histogram.csv"); //might be removed? TODO
-    n_priv.param<std::string>("initializationMethod", _initializationMethod, "3dEstimate");
-    n_priv.param<double>("initialX", _initialX, 0.0);
-    n_priv.param<double>("initialY", _initialY, 0.0);
-    n_priv.param<double>("initialZ", _initialZ, 0.2);
-    //Units are meters outside the program, but millimeters inside, so we need to convert
-    _initialX*=1000.0;
-    _initialY*=1000.0;
-    _initialZ*=1000.0;
-    
-    //Camera intrinsic parameters
-    n_priv.param<int>("w", _calibrationImageWidth,        320); //NOT USED AT THE MOMENT
-    n_priv.param<int>("h", _calibrationImageHeight,       240);  //NOT USED AT THE MOMENT
-    n_priv.param<double>("perspectiveFx", _perspectiveFx, 980.0);
-    n_priv.param<double>("perspectiveFy", _perspectiveFy, 982.0);
-    n_priv.param<double>("perspectiveCx", _perspectiveCx, 320.0);
-    n_.param<double>("perspectiveCy", _perspectiveCy, 240.0);
-
-
-    std::cout << "initialX: " << _initialX << std::endl;
-    std::cout << "initialY: " << _initialY << std::endl;
-    std::cout << "initialZ: " << _initialZ << std::endl;
-    if(_staticImageTest)
-    {
-        _nParticles=1;
-        _accelStDev=0.0001;
-        _initialX =  -45.0; //careful: these are millimeters!
-        _initialY =  -45.0; //careful: these are millimeters!
-        _initialZ =  290.0; //careful: these are millimeters!
-    }
-    
     //*********************************************
     // Create and initialize some data structures *
     //*********************************************
@@ -346,13 +327,13 @@ bool PF3DTracker::open()
 
         //initialize X
         mean=(double)_initialX;
-        cv::randn(_particles1, cv::Scalar(mean), cv::Scalar(_accelStDev));
+        cv::randn(_particles1, cv::Scalar(mean), cv::Scalar(accelStdDev));
         //initialize Y
         mean=(double)_initialY;
-        cv::randn(_particles2, cv::Scalar(mean), cv::Scalar(_accelStDev));
+        cv::randn(_particles2, cv::Scalar(mean), cv::Scalar(accelStdDev));
         //initialize Z
         mean=(double)_initialZ;
-        cv::randn(_particles3, cv::Scalar(mean), cv::Scalar(_accelStDev));
+        cv::randn(_particles3, cv::Scalar(mean), cv::Scalar(accelStdDev));
 
         //initialize VX
         mean=0;
@@ -396,12 +377,7 @@ bool PF3DTracker::open()
     _attentionOutput=0;
     _firstFrame=true;
 
-    // Set the output ports
-    _outputVideoPort = it_.advertise(_outputVideoPortName.c_str(), 1);
-    _outputDataPort  = n_.advertise<pf3d_tracker::Estimates>(_outputDataPortName, 1);
-    
-    // Set the input video port, with the associated callback method
-    _inputVideoPort = it_.subscribe(_inputVideoPortName.c_str(), 1, &PF3DTracker::processImageCallback, this);
+
     if(quit==true)
     {
         printf("There were problems initializing the object: the execution was interrupted.\n");
@@ -437,9 +413,8 @@ bool PF3DTracker::open()
 //**************************
 //* PROCESS IMAGE CALLBACK *
 //**************************
-void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
+void PF3DTracker::processImage(const cv::Mat & image)
 {
-    tic();
     int count;
     unsigned int seed;
     double likelihood, mean, maxX, maxY, maxZ;
@@ -447,45 +422,10 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
     double meanU;
     double meanV;
     double wholeCycle;
-    string outputFileName;
-    stringstream out;
-    cv::Mat rawImageBGR;
 
     seed=rand();
     
-    if(_staticImageTest)
-    {
-        rawImageBGR = cv::imread( "testImage.png", 1) ;
-        if( rawImageBGR.data == 0 ) //load the image from file.
-        {
-            std::cout << "Tried to open testImage.png"<<std::endl;
-            cout<<"I wasn't able to open the test image file!\n";
-            fflush(stdout);
-            return; //if I can't do it, I just quit the program.
-        }
-
-        //_rawImage = cvCreateImage(cvSize(rawImageBGR.cols, rawImageBGR.rows), rawImageBGR->depth, rawImageBGR->nChannels);
-        //cvCvtColor(rawImageBGR,_rawImage,CV_BGR2RGB);
-        _rawImage=rawImageBGR;
-    }
-    else
-    {
-        //Read the image from the buffer
-        try
-        {
-            std::string aux = "bgr8";
-
-            _rawImage=cv_bridge::toCvShare(msg_ptr, aux)->image;
-        }
-        catch (cv_bridge::Exception& e)
-        {
-            ROS_ERROR("cv_bridge exception: %s", e.what());
-            return;
-        }
-
-        //_rawImage = bridge_.imgMsgToCv(msg_ptr,aux); //This is an RGB image
-    }
-
+    _rawImage=image;
 
 
     //         //TEST write the bytes of this image to a file, so that we see what the encoding is.
@@ -533,7 +473,6 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
     int   maxIndex=-1;
     for(count=0;count< _nParticles;count++)
     {
-
         evaluateHypothesisPerspectiveFromRgbImage(_model3dPointsMat,(double)_particles.at<double>(0,count),(double)_particles.at<double>(1,count),(double)_particles.at<double>(2,count),_modelHistogramMat,_rawImage,_perspectiveFx,_perspectiveFy, _perspectiveCx,_perspectiveCy,_insideOutsideDifferenceWeight,likelihood);
 
         _particles.at<double>(6,count)=likelihood;
@@ -544,7 +483,6 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
             maxIndex=count;
         }
     }
-    
     
     if(maxIndex!=-1)
     {
@@ -587,15 +525,15 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
         velocityStDev=0; //warning ??? !!! I'm setting parameters for the dynamic model here.
 
         mean=(double)_initialX;
-        cv::randn(_particles1, cv::Scalar(mean), cv::Scalar(_accelStDev));
+        cv::randn(_particles1, cv::Scalar(mean), cv::Scalar(accelStdDev));
 
         //initialize Y
         mean=(double)_initialY;
-        cv::randn(_particles2, cv::Scalar(mean), cv::Scalar(_accelStDev));
+        cv::randn(_particles2, cv::Scalar(mean), cv::Scalar(accelStdDev));
 
         //initialize Z
         mean=(double)_initialZ;
-        cv::randn(_particles3, cv::Scalar(mean), cv::Scalar(_accelStDev));
+        cv::randn(_particles3, cv::Scalar(mean), cv::Scalar(accelStdDev));
 
         //initialize VX
         mean=0;
@@ -722,16 +660,17 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
         //******************************************
         //APPLY THE MOTION MODEL: 1.APPLY THE MATRIX
         //******************************************
-        cv::multiply(_A,_newParticles,_particles);
+        _particles=_A*_newParticles;
+        //cv::multiply(_A,_newParticles,_particles);
 
         //the "good" particles now are in _particles
         //********************************************************
         //APPLY THE MOTION MODEL: 2.ADD THE EFFECT OF ACCELERATION
         //********************************************************
         mean = 0;
-        //cout<<"Noise generation parameters: mean= "<<mean<<", accelStDev= "<<_accelStDev<<endl;
+        //cout<<"Noise generation parameters: mean= "<<mean<<", accelStDev= "<<accelStdDev<<endl;
         //cout<<"_noise1 before generation: "<<((double*)(_noise1.data + _noise.step*0))[0]<<endl;
-        cv::randn(_noise1, cv::Scalar(mean), cv::Scalar(_accelStDev));
+        cv::randn(_noise1, cv::Scalar(mean), cv::Scalar(accelStdDev));
 
         //cout<<"_noise1 after generation: "<<((double*)(_noise1.data + _noise.step*0))[0]<<endl;
         _noise1.copyTo(_noise2);
@@ -796,32 +735,7 @@ void PF3DTracker::processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr
         _firstFrame=false;
     }
     
-    /////////////////
-    // DATA OUTPUT //
-    /////////////////
 
-    pf3d_tracker::Estimates outMsg;
-    outMsg.mean.point.x=weightedMeanX/1000;
-    outMsg.mean.point.y=weightedMeanY/1000;
-    outMsg.mean.point.z=weightedMeanZ/1000;
-
-    outMsg.likelihood=maxLikelihood/exp((double)20.0);
-    outMsg.meanU=meanU;
-    outMsg.meanV=meanV;
-    outMsg.seeingBall=_seeingObject;
-    _outputDataPort.publish(outMsg);
-
-
-
-    sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", _rawImage).toImageMsg();
-
-    _outputVideoPort.publish(img_msg);
-
-    if(_staticImageTest)
-    {
-        cv::imwrite("testImageOutput.png", _rawImage);
-        ros::shutdown(); //exit the program after just one cycle
-    }
     //cvReleaseImage(&_rawImage);
     _frameCounter++;
     
@@ -1004,7 +918,7 @@ bool PF3DTracker::computeTemplateHistogram(string imageFileName,string dataFileN
                 //TEST printf("histogram->size[0].step,%d\n",histogram->dim[0].step);  256
                 //TEST printf("histogram->size[1].step,%d\n",histogram->dim[1].step);   32
                 //TEST printf("histogram->size[2].step,%d\n",histogram->dim[2].step);    4
-                *((double*)(histogram->data + a*histogram->dim[0].step + b*histogram->dim[1].step + c*histogram->dim[2].step)) +=1;
+                *((double*)(histogram->data.ptr + a*histogram->dim[0].step + b*histogram->dim[1].step + c*histogram->dim[2].step)) +=1;
 
                 //initial pointer + Y*UBINS*VBINS*histogram.step + U*VBINS*histogram.step + V*histogram.step. RIGHT?
                 //histogram[(yuvBinsImage[u][v][0])*UBins*VBins + (yuvBinsImage[u][v][1])*VBins +  (yuvBinsImage[u][v][2]) ]+=1; //increment the correct bin counter.
@@ -1038,7 +952,7 @@ bool PF3DTracker::computeTemplateHistogram(string imageFileName,string dataFileN
             {
                 for(c=0;c<VBins;c++)
                 {
-                    fout<<*((double*)(histogram.data + a*histogram->dim[0].step + b*histogram->dim[1].step + c*histogram->dim[2].step))<<endl;
+                    fout<<*((double*)(histogram->data.ptr + a*histogram->dim[0].step + b*histogram->dim[1].step + c*histogram->dim[2].step))<<endl;
                     //used to be: fout<<(double)(histogram[a*UBins*VBins + b*VBins + c])<<endl;
                 }
             }
@@ -1071,7 +985,7 @@ bool PF3DTracker::readModelHistogram(CvMatND* histogram,const char fileName[])
                 for(c3=0;c3<VBins;c3++)
                 {
                     fin.getline(line, 14);
-                    *((double*)(histogram.data + c1*histogram->dim[0].step + c2*histogram->dim[1].step + c3*histogram->dim[2].step))=(double)atof(line);
+                    *((double*)(histogram->data.ptr + c1*histogram->dim[0].step + c2*histogram->dim[1].step + c3*histogram->dim[2].step))=(double)atof(line);
                     //TEST cout << c1 <<" "<<c2<<" "<<c3 << endl;
                     //TEST fflush(stdout);
                 }
@@ -1347,7 +1261,8 @@ bool PF3DTracker::place3dPointsPerspective(cv::Mat & points, double x, double y,
     //***********************************
     //Multiply Ry by points
     //_points2Mat=_ryMat*points     [3 x 2*nPixels]
-    cv::multiply(_ryMat,points,_points2Mat);
+    _points2Mat=_ryMat*points;
+
 
 
     //used to be:
@@ -1363,11 +1278,10 @@ bool PF3DTracker::place3dPointsPerspective(cv::Mat & points, double x, double y,
         }
     */
     
-
-
     //*****************************************
     // 2. Apply a vertical and horizontal shift
     //*****************************************
+
     //sum floorDistance to all the elements in the first row of "points2".
     _tempMat1.setTo(cv::Scalar(floorDistance)); //set all elements of _tempMat1 to the value of "floorDistance"
     cv::add(_p2Mat1,_tempMat1,_p2Mat1);         //_p2Mat1=_p2Mat1+_tempMat1.
@@ -1404,9 +1318,7 @@ bool PF3DTracker::place3dPointsPerspective(cv::Mat & points, double x, double y,
     //**********************************
     //Multiply RZ by "points2", put the result in "points"
     //points=_rzMat*_points2Mat     [3 x 2*nPixels]
-    cv::multiply(_rzMat,_points2Mat,points);
-
-
+    points=_rzMat*_points2Mat;
     //used to be:
     /*
     returnValue=ippmMul_mm_32f(rz,      rzStride1,     Stride2,  rzColumns,      rzRows,
@@ -1513,8 +1425,8 @@ int PF3DTracker::perspective_projection(cv::Mat & xyz, double fx, double fy, dou
     //#########################
     //UV=projectionMat*(XYZ/Z).
     //#########################
-    cv::multiply(_projectionMat,xyz,uv);
-
+    //cv::multiply(_projectionMat,xyz,uv);
+    uv=_projectionMat*xyz;
     /*    for(a=0;a<2;a++)
     {
         cout<<"LINE ";
@@ -1560,7 +1472,7 @@ bool PF3DTracker::computeHistogramFromRgbImage(cv::Mat & uv, cv::Mat & image,  C
             b=(((uchar*)(image.data + image.step*v))[u*3+2]);
             index=r*65536+g*256+b;
             //increase the bin counter
-            *((double*)(innerHistogramMat.data + _lut[index].y*innerHistogramMat->dim[0].step + _lut[index].u*innerHistogramMat->dim[1].step + _lut[index].v*innerHistogramMat->dim[2].step)) +=1;
+            *((double*)(innerHistogramMat->data.ptr + _lut[index].y*innerHistogramMat->dim[0].step + _lut[index].u*innerHistogramMat->dim[1].step + _lut[index].v*innerHistogramMat->dim[2].step)) +=1;
             //used to be: innerHistogram[_lut[index].y][_lut[index].u][_lut[index].v]+=1; //increment the correct bin counter.
             usedInnerPoints+=1;
         }
@@ -1592,7 +1504,7 @@ bool PF3DTracker::computeHistogramFromRgbImage(cv::Mat & uv, cv::Mat & image,  C
             b=(((uchar*)(image.data + image.step*v))[u*3+2]);
             index=r*65536+g*256+b;
             //increase the bin counter
-            *((double*)(outerHistogramMat.data + _lut[index].y*outerHistogramMat->dim[0].step + _lut[index].u*outerHistogramMat->dim[1].step + _lut[index].v*outerHistogramMat->dim[2].step)) +=1;
+            *((double*)(outerHistogramMat->data.ptr + _lut[index].y*outerHistogramMat->dim[0].step + _lut[index].u*outerHistogramMat->dim[1].step + _lut[index].v*outerHistogramMat->dim[2].step)) +=1;
             //used to be: outerHistogram[_lut[index].y][_lut[index].u][_lut[index].v]+=1; //increment the correct bin counter.
             usedOuterPoints+=1;
         }
@@ -1622,7 +1534,7 @@ bool PF3DTracker::calculateLikelihood(CvMatND* templateHistogramMat, CvMatND* in
             {
                 for(c=0;c<VBins;c++)
                 {
-                    cout<<*((double*)(innerHistogramMat.data + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step))<<" ";
+                    cout<<*((double*)(innerHistogramMat->data.ptr + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step))<<" ";
                 }
                 cout<< " A"<<endl;
             }
@@ -1636,7 +1548,7 @@ bool PF3DTracker::calculateLikelihood(CvMatND* templateHistogramMat, CvMatND* in
             {
                 for(c=0;c<VBins;c++)
                 {
-                    cout<<*((double*)(outerHistogramMat->data + a*outerHistogramMat->dim[0].step + b*outerHistogramMat->dim[1].step + c*outerHistogramMat->dim[2].step))<<" ";
+                    cout<<*((double*)(outerHistogramMat->data.ptr + a*outerHistogramMat->dim[0].step + b*outerHistogramMat->dim[1].step + c*outerHistogramMat->dim[2].step))<<" ";
                 }
                 cout<< " B"<<endl;
             }
@@ -1650,7 +1562,7 @@ bool PF3DTracker::calculateLikelihood(CvMatND* templateHistogramMat, CvMatND* in
             {
                 for(c=0;c<VBins;c++)
                 {
-                    cout<<*((double*)(templateHistogramMat.data + a*templateHistogramMat->dim[0].step + b*templateHistogramMat->dim[1].step + c*templateHistogramMat->dim[2].step))<<" ";
+                    cout<<*((double*)(templateHistogramMat->data.ptr + a*templateHistogramMat->dim[0].step + b*templateHistogramMat->dim[1].step + c*templateHistogramMat->dim[2].step))<<" ";
                 }
                 cout<< " C"<<endl;
             }
@@ -1688,11 +1600,11 @@ bool PF3DTracker::calculateLikelihood(CvMatND* templateHistogramMat, CvMatND* in
             for(c=0;c<VBins;c++)
             {
                 likelihood=likelihood + sqrt(
-                            *((double*)(innerHistogramMat.data + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step)) *
-                        *((double*)(templateHistogramMat.data + a*templateHistogramMat->dim[0].step + b*templateHistogramMat->dim[1].step + c*templateHistogramMat->dim[2].step)))
+                            *((double*)(innerHistogramMat->data.ptr + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step)) *
+                        *((double*)(templateHistogramMat->data.ptr + a*templateHistogramMat->dim[0].step + b*templateHistogramMat->dim[1].step + c*templateHistogramMat->dim[2].step)))
                         - _insideOutsideDifferenceWeight*sqrt(
-                            *((double*)(outerHistogramMat.data + a*outerHistogramMat->dim[0].step + b*outerHistogramMat->dim[1].step + c*outerHistogramMat->dim[2].step)) *
-                        *((double*)(innerHistogramMat.data + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step)));
+                            *((double*)(outerHistogramMat->data.ptr + a*outerHistogramMat->dim[0].step + b*outerHistogramMat->dim[1].step + c*outerHistogramMat->dim[2].step)) *
+                        *((double*)(innerHistogramMat->data.ptr + a*innerHistogramMat->dim[0].step + b*innerHistogramMat->dim[1].step + c*innerHistogramMat->dim[2].step)));
 
                 /*              used to be
                 likelihood=likelihood + sqrt(

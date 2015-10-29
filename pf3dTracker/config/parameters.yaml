@@ -8,7 +8,7 @@
 #############################
 nParticles:                 900
 #nParticles                 number of particles used
-accelStDev:                 30
+accelStdDev:                 30
 #accelStDev                 50 30 15
 #accelStDev                 standard deviation of the acceleration noise
 insideOutsideDiffWeight:    1.5
@@ -73,11 +73,11 @@ perspectiveCy:               132
 #######################
 #trackedObjectType [sphere|parallelogram]
 trackedObjectType:           sphere
-#trackedObjectColorTemplate  /home/vislab/repositories/ros/object_recognition/pf3dTracker/models/blue_general_model_2009_03_03.bmp
-trackedObjectColorTemplate:  /home/vislab/repositories/ros/object_recognition/pf3dTracker/models/red_ball_paris_handle.jpg
-trackedObjectShapeTemplate:  /home/vislab/repositories/ros/object_recognition/pf3dTracker/models/initial_ball_points_smiley_31mm_20percent.csv
+#trackedObjectColorTemplate  blue_general_model_2009_03_03.bmp
+trackedObjectColorTemplate:  red_ball_paris_handle.jpg
+trackedObjectShapeTemplate:  initial_ball_points_smiley_31mm_20percent.csv
 
-motionModelMatrix:           /home/vislab/repositories/ros/object_recognition/pf3dTracker/models/motion_model_matrix.csv
+motionModelMatrix:           motion_model_matrix.csv
 trackedObjectTemp:           current_histogram.csv
 
 #######################

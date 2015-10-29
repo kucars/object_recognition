@@ -13,7 +13,15 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <ros/ros.h>
 
+#include "image_transport/image_transport.h"
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/image_encodings.h>
+//#include <cv_bridge/CvBridge.h>
+#include <cv_bridge/cv_bridge.h>
+
+#include <std_msgs/Time.h>
 
 #ifdef _CH_
 #pragma package <opencv>
@@ -25,8 +33,10 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+using namespace cv_bridge;
 
 #include <iCub/pf3dTrackerSupport.hpp>
+#include <pf3d_tracker/Estimates.h>
 
 //for tracking in the iCub: 1000 particles and an stDev of 80 work well with slow movements of the ball. the localization is quite stable. the shape model has a 20% difference wrt the real radius.
 //#define _nParticles 5000
@@ -59,13 +69,27 @@ class PF3DTracker
 {
 
 private:
-    std::string dataFileName;
-    std::string trackedObjectShapeTemplate;
-    std::string trackedObjectColorTemplate;
-    std::string motionModelMatrix;
+
     int _numParticlesReceived;
 
-
+    ros::NodeHandle n_;
+    ros::NodeHandle n_priv;
+    image_transport::ImageTransport it_;
+    //parameters set during initialization.
+    std::string _inputVideoPortName;
+    image_transport::Subscriber  _inputVideoPort;
+    std::string _outputVideoPortName;
+    image_transport::Publisher _outputVideoPort;
+    std::string _outputDataPortName;
+    ros::Publisher _outputDataPort;
+    //std::string _inputParticlePortName;
+    //BufferedPort<Bottle> _inputParticlePort;
+    std::string _outputParticlePortName;
+    //BufferedPort<Bottle> _outputParticlePort;
+    //std::string _outputAttentionPortName;
+    //ros::Publisher _outputAttentionPort;
+    std::string _outputUVDataPortName;
+    ros::Publisher _outputUVDataPort;
     bool supplyUVdata;
 
     string _projectionModel;
@@ -95,7 +119,7 @@ private:
     Lut*   _lut;
     cv::Mat _A;
     int _nParticles;
-    double accelStdDev;
+    double _accelStDev;
     double _insideOutsideDifferenceWeight;
     int _colorTransfPolicy;
 
@@ -150,9 +174,14 @@ private:
     cv::Mat _noise1; //lines from 0 to 2
     cv::Mat _noise2; //lines from 3 to 5
 
+
+    std_msgs::Time _rosTimestamp;
+
+
     //sensor_msgs::CvBridge bridge_;
     cv::Mat frame;
 
+    cv_bridge::CvImageConstPtr _rosImage;
     cv::Mat _rawImage;
     cv::Mat _transformedImage;//_yuvBinsImage[image_width][image_height][3];
     double _initialTime;
@@ -186,6 +215,7 @@ private:
     //bool evaluateHypothesisPerspective(cv::Mat & model3dPointsMat, double x, double y, double z, CvMatND* modelHistogramMat, IplImage* transformedImage, double fx, double fy, double u0, double v0, double, double &likelihood);
 
 
+    void processImageCallback(const sensor_msgs::ImageConstPtr& msg_ptr);
 
 
     //////////////////////////////////////////////
@@ -197,29 +227,12 @@ private:
     bool systematic_resampling(cv::Mat & oldParticlesState, cv::Mat & oldParticlesWeights, cv::Mat & newParticlesState, cv::Mat & cumWeight);
 
 public:
-    PF3DTracker(const int & __nParticles,
-                const double & __accelStdDev,
-                const double & __insideOutsideDifferenceWeight,
-                const double & __likelihoodThreshold,
-                const std::string & __trackedObjectColorTemplate,
-                const std::string & __trackedObjectShapeTemplate,
-                const std::string & __motionModelMatrix,
-                const std::string & __dataFileName,
-                const std::string & __initializationMethod,
-                const double & __initialX,
-                const double & __initialY,
-                const double & __initialZ,
-                const int & __calibrationImageWidth,
-                const int & __calibrationImageHeight,
-                const double & __perspectiveFx,
-                const double & __perspectiveFy,
-                const double & __perspectiveCx,
-                const double & __perspectiveCy); //constructor
+    PF3DTracker(); //constructor
+    PF3DTracker(ros::NodeHandle); //constructor
     ~PF3DTracker(); //destructor
 
     bool open(); //member to set the object up.
     virtual bool close();                  //member to close the object.
-    void processImage(const cv::Mat & image);
 
     //virtual bool updateModule();           //member that is repeatedly called by YARP, to give this object a chance to do something.
 

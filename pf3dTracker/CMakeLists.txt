@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   message_generation
+  image_transport
 )
 
 find_package(OpenCV REQUIRED)
@@ -39,13 +40,21 @@ catkin_package(
 
 
 #common commands for building c++ executables and libraries
+include_directories(include
+  ${GSL_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
+  #${CUDA_INCLUDE_DIRS}
+)
 
-INCLUDE_DIRECTORIES(${GSL_INCLUDE_DIRS})
-INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
-INCLUDE_DIRECTORIES(${YARP_INCLUDE_DIRS})
-INCLUDE_DIRECTORIES(./include)
 
-SUBDIRS(src)
+include_directories(lib/)
 
+## foveated stereo lib
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/)
+
+
+add_executable(pf3d_tracker_node src/Pf3dTrackerRos.cpp)
+
+target_link_libraries(pf3d_tracker_node pf3d_tracker_lib ${catkin_LIBRARIES})
 
 
